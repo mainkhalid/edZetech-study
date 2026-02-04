@@ -1,282 +1,147 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom'; // 1. Correct import (lowercase)
 import { 
-  Microscope, 
-  BookOpen, 
-  Users, 
-  TrendingUp,
-  Award,
-  Target,
-  Lightbulb,
-  FileText,
-  Globe
+  Microscope, Users, TrendingUp, Award, Target, 
+  Lightbulb, Calendar, ArrowRight, Loader2
 } from 'lucide-react';
+import api from '../api/axios';
+import ScholarshipCard from '../components/ScholarshipCard';
 
 const Research = () => {
-  const researchAreas = [
+  const navigate = useNavigate(); 
+  
+  const [projects, setProjects] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const scholarships = [
     {
-      icon: <Microscope size={40} />,
-      title: 'Technology & Innovation',
-      description: 'AI, Machine Learning, IoT, Cybersecurity, and Software Engineering',
-      projects: 15,
-      color: 'blue'
-    },
-    {
-      icon: <TrendingUp size={40} />,
-      title: 'Business & Economics',
-      description: 'Entrepreneurship, Financial Management, Marketing Analytics, and Trade',
-      projects: 12,
-      color: 'green'
-    },
-    {
-      icon: <Users size={40} />,
-      title: 'Social Sciences',
-      description: 'Education, Psychology, Sociology, and Community Development',
-      projects: 10,
-      color: 'purple'
-    },
-    {
-      icon: <Lightbulb size={40} />,
-      title: 'Engineering & Design',
-      description: 'Civil Engineering, Electrical Systems, and Sustainable Design',
-      projects: 18,
-      color: 'orange'
+      id: 1,
+      title: "Global STEM Excellence 2026",
+      provider: "TechForward Foundation",
+      thumbnail: "https://cdn.tuko.co.ke/images/720/18d0a87c71bce9fb.webp?v=1",
+      description: "Full tuition coverage for undergraduate students pursuing degrees in AI and Sustainable Energy.",
+      amount: "$15,000 / Year",
+      deadline: "Oct 15, 2026",
+      requirements: ["3.8 GPA", "Personal Statement", "2 Recommendations"],
+      eligibility: ["Full-time STEM students", "International students welcome"]
     }
   ];
 
-  const researchCenters = [
-    {
-      name: 'Center for Innovation & Technology',
-      focus: 'AI, Data Science, and Digital Transformation',
-      director: 'Dr. James Odhiambo',
-      established: '2018'
-    },
-    {
-      name: 'Business Research Institute',
-      focus: 'Entrepreneurship, SME Development, and Market Research',
-      director: 'Prof. Mary Kamau',
-      established: '2016'
-    },
-    {
-      name: 'Sustainable Engineering Lab',
-      focus: 'Green Technology, Renewable Energy, and Smart Cities',
-      director: 'Dr. Peter Mwangi',
-      established: '2020'
-    }
-  ];
-
-  const publications = [
-    {
-      title: 'AI-Driven Agricultural Solutions for Smallholder Farmers in East Africa',
-      authors: 'Wanjiru, S., Omondi, J., & Kimani, P.',
-      journal: 'Journal of Agricultural Technology',
-      year: '2025',
-      type: 'Journal Article'
-    },
-    {
-      title: 'Digital Financial Inclusion: Mobile Money Impact on Rural Communities',
-      authors: 'Mutua, A. & Otieno, R.',
-      journal: 'African Economic Review',
-      year: '2025',
-      type: 'Research Paper'
-    },
-    {
-      title: 'Sustainable Urban Development in Nairobi: A Case Study',
-      authors: 'Kamau, M., Njoroge, D., & Akinyi, F.',
-      journal: 'Urban Planning & Design',
-      year: '2024',
-      type: 'Conference Paper'
-    }
-  ];
-
-  const achievements = [
-    { number: '200+', label: 'Research Projects', icon: <FileText size={32} /> },
-    { number: '150+', label: 'Publications', icon: <BookOpen size={32} /> },
-    { number: '50+', label: 'Research Partners', icon: <Globe size={32} /> },
-    { number: '20+', label: 'Awards Won', icon: <Award size={32} /> }
-  ];
+  useEffect(() => {
+    const fetchActiveProjects = async () => {
+      try {
+        const response = await api.get('/research');
+        if (response.data.success) {
+          setProjects(response.data.data);
+        }
+      } catch (error) {
+        console.error("Error fetching research:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchActiveProjects();
+  }, []);
+  
 
   return (
     <div className="min-h-screen bg-slate-50">
-      
-      {/* Hero Section */}
-      <div className="bg-gradient-to-r from-[#1a2b4c] to-[#2d4263] text-white py-20">
-        <div className="max-w-7xl mx-auto px-4 text-center">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-white/10 rounded-full mb-6">
-            <Microscope size={40} />
-          </div>
-          <h1 className="text-5xl font-extrabold mb-6">Research & Innovation</h1>
-          <p className="text-xl text-gray-300 max-w-3xl mx-auto mb-8">
-            Advancing knowledge through cutting-edge research that addresses real-world challenges and creates impact
-          </p>
-        </div>
-      </div>
+      {/* Hero Section ... */}
+     <section
+  className="relative py-16 text-white bg-cover bg-center"
+  style={{
+    backgroundImage:
+      "url('https://cdn.tuko.co.ke/images/720/18d0a87c71bce9fb.webp?v=1')"
+  }}
+>
+  {/* Dark overlay */}
+  <div className="absolute inset-0 bg-[#1a2b4c]/85"></div>
 
-      {/* Research Stats */}
-      <div className="max-w-7xl mx-auto px-4 -mt-10">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {achievements.map((achievement, index) => (
-            <div key={index} className="bg-white rounded-xl shadow-lg p-6 text-center hover:shadow-xl transition-shadow">
-              <div className="text-orange-500 flex justify-center mb-4">
-                {achievement.icon}
-              </div>
-              <div className="text-4xl font-extrabold text-[#1a2b4c] mb-2">
-                {achievement.number}
-              </div>
-              <p className="text-gray-600 font-semibold">{achievement.label}</p>
-            </div>
-          ))}
-        </div>
-      </div>
+  {/* Content */}
+  <div className="relative max-w-7xl mx-auto px-4 text-center">
+    <h1 className="text-5xl font-extrabold mb-4">
+      Research & Innovation
+    </h1>
+    <p className="text-slate-300 max-w-2xl mx-auto italic">
+      "Advancing knowledge through technology and community-centered research."
+    </p>
+  </div>
+</section>
 
-      {/* Research Areas */}
+
+      {/* 2. DYNAMIC ACTIVE RESEARCH PROJECTS */}
       <section className="py-20">
         <div className="max-w-7xl mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-sm font-bold text-orange-500 uppercase tracking-widest mb-2">
-              Our Focus
-            </h2>
-            <h1 className="text-4xl font-extrabold text-[#1a2b4c] mb-4">
-              Research Areas
-            </h1>
-            <p className="text-gray-600 max-w-2xl mx-auto">
-              Explore our key research domains and ongoing projects
-            </p>
+          {/* Header ... */}
+          <div className="flex justify-between items-end mb-12">
+            <div>
+              <h2 className="text-sm font-bold text-orange-500 uppercase tracking-widest mb-2">Ongoing Work</h2>
+              <h1 className="text-4xl font-extrabold text-[#1a2b4c]">On Going Research & Innovations</h1>
+            </div>
+            <button className="text-orange-600 font-bold flex items-center gap-2 hover:gap-3 transition-all">
+              View All Projects <ArrowRight size={20}/>
+            </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {researchAreas.map((area, index) => (
-              <div 
-                key={index}
-                className="group bg-white rounded-xl shadow-lg p-8 hover:shadow-2xl transition-all"
-              >
-                <div className={`inline-flex items-center justify-center w-16 h-16 rounded-full bg-${area.color}-100 mb-6 text-${area.color}-600 group-hover:scale-110 transition-transform`}>
-                  {area.icon}
+          {loading ? (
+            <div className="flex justify-center py-20">
+              <Loader2 className="animate-spin text-orange-500" size={40}/>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {projects.slice(0, 3).map((project) => (
+                <div key={project._id} className="bg-white rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all border border-slate-100 group">
+                  <div className="relative h-48">
+                    <img 
+                      src={project.thumbnail?.url || "/api/placeholder/400/250"} 
+                      alt={project.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    />
+                    <div className="absolute top-4 right-4 bg-orange-500 text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase">
+                      {project.status}
+                    </div>
+                  </div>
+                  <div className="p-6">
+                    <span className="text-orange-600 text-xs font-bold uppercase">{project.department}</span>
+                    <h3 className="text-xl font-bold text-[#1a2b4c] mt-2 mb-3 line-clamp-1">{project.title}</h3>
+                    <p className="text-slate-600 text-sm line-clamp-2 mb-4">{project.abstract}</p>
+                    <div className="flex items-center justify-between pt-4 border-t border-slate-50">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold">
+                          {project.lead ? project.lead.charAt(0) : 'R'}
+                        </div>
+                        <span className="text-xs font-medium text-slate-500">{project.lead}</span>
+                      </div>
+                      <button
+                       onClick={() => navigate(`/research/${project._id}`)} 
+                       className="text-[#1a2b4c] font-bold text-sm hover:text-orange-600">
+                        Details →
+                      </button>
+                    </div>
+                  </div>
                 </div>
-                <h3 className="text-2xl font-bold text-[#1a2b4c] mb-3">{area.title}</h3>
-                <p className="text-gray-600 mb-4">{area.description}</p>
-                <div className="flex items-center gap-2 text-sm">
-                  <Target size={16} className="text-orange-500" />
-                  <span className="font-semibold text-gray-700">{area.projects} Active Projects</span>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
-      {/* Research Centers */}
+      {/* 3. SCHOLARSHIPS SECTION */}
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center mb-12">
-            <h2 className="text-sm font-bold text-orange-500 uppercase tracking-widest mb-2">
-              Facilities
-            </h2>
-            <h1 className="text-4xl font-extrabold text-[#1a2b4c] mb-4">
-              Research Centers
-            </h1>
-            <p className="text-gray-600 max-w-2xl mx-auto">
-              State-of-the-art research facilities equipped with modern technology
-            </p>
+            <h2 className="text-sm font-bold text-rose-500 uppercase tracking-widest mb-2">Funding Opportunities</h2>
+            <h1 className="text-4xl font-extrabold text-[#1a2b4c] mb-4">Scholarships & Grants</h1>
           </div>
 
-          <div className="space-y-6">
-            {researchCenters.map((center, index) => (
-              <div 
-                key={index}
-                className="bg-gradient-to-r from-slate-50 to-white border-2 border-gray-200 rounded-xl p-8 hover:border-orange-400 transition-all"
-              >
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                  <div className="flex-1">
-                    <h3 className="text-2xl font-bold text-[#1a2b4c] mb-2">{center.name}</h3>
-                    <p className="text-gray-600 mb-3">{center.focus}</p>
-                    <div className="flex flex-wrap gap-4 text-sm">
-                      <span className="flex items-center gap-1">
-                        <Users size={16} className="text-orange-500" />
-                        <span className="text-gray-700">Director: <strong>{center.director}</strong></span>
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Award size={16} className="text-orange-500" />
-                        <span className="text-gray-700">Est. <strong>{center.established}</strong></span>
-                      </span>
-                    </div>
-                  </div>
-                  <button className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-lg font-semibold transition-colors whitespace-nowrap">
-                    Learn More
-                  </button>
-                </div>
-              </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {scholarships.map((scholarship) => (
+              <ScholarshipCard 
+                key={scholarship.id} 
+                scholarship={scholarship} 
+                
+              />
             ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Recent Publications */}
-      <section className="py-20 bg-slate-50">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-sm font-bold text-orange-500 uppercase tracking-widest mb-2">
-              Knowledge Sharing
-            </h2>
-            <h1 className="text-4xl font-extrabold text-[#1a2b4c] mb-4">
-              Recent Publications
-            </h1>
-            <p className="text-gray-600 max-w-2xl mx-auto">
-              Discover our latest research contributions to academic and industry communities
-            </p>
-          </div>
-
-          <div className="space-y-6 max-w-5xl mx-auto">
-            {publications.map((pub, index) => (
-              <div 
-                key={index}
-                className="bg-white rounded-xl shadow-md p-6 hover:shadow-lg transition-shadow"
-              >
-                <div className="flex items-start gap-4">
-                  <div className="flex-shrink-0 w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center text-orange-600 font-bold">
-                    {index + 1}
-                  </div>
-                  <div className="flex-1">
-                    <span className="inline-block px-3 py-1 bg-blue-100 text-blue-600 text-xs font-semibold rounded-full mb-2">
-                      {pub.type}
-                    </span>
-                    <h3 className="text-xl font-bold text-[#1a2b4c] mb-2">{pub.title}</h3>
-                    <p className="text-gray-600 text-sm mb-2">{pub.authors}</p>
-                    <div className="flex items-center gap-4 text-sm text-gray-500">
-                      <span className="italic">{pub.journal}</span>
-                      <span>•</span>
-                      <span>{pub.year}</span>
-                    </div>
-                  </div>
-                  <button className="text-orange-500 hover:text-orange-600 font-semibold text-sm">
-                    View →
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="text-center mt-8">
-            <button className="bg-[#1a2b4c] hover:bg-[#2d4263] text-white px-8 py-3 rounded-lg font-semibold transition-colors">
-              View All Publications
-            </button>
-          </div>
-        </div>
-      </section>
-
-      {/* Collaboration CTA */}
-      <section className="py-20 bg-gradient-to-r from-[#1a2b4c] to-[#2d4263] text-white">
-        <div className="max-w-4xl mx-auto px-4 text-center">
-          <h2 className="text-4xl font-extrabold mb-6">Collaborate With Us</h2>
-          <p className="text-xl text-gray-300 mb-8">
-            Partner with Zetech University on groundbreaking research projects and innovation initiatives
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-4 rounded-lg font-bold text-lg transition-colors">
-              Research Partnerships
-            </button>
-            <button className="bg-white/10 hover:bg-white/20 text-white px-8 py-4 rounded-lg font-bold text-lg transition-colors border-2 border-white/20">
-              Contact Research Office
-            </button>
           </div>
         </div>
       </section>

@@ -58,7 +58,7 @@ const Navbar = () => {
       ]
     },
     { 
-      name: 'RESEARCH', 
+      name: 'RESEARCH & SCHOLARSHIPS', 
       href: '/research', 
       hasDropdown: true,
       subLinks: [

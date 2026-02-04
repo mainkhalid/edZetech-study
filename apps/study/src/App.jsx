@@ -1,6 +1,7 @@
 import React from 'react'
 import { BrowserRouter, Route, Routes, Navigate, useNavigate } from 'react-router-dom'
 import { Player } from '@lottiefiles/react-lottie-player'
+import {Toaster} from "sonner"
 import { Home as HomeIcon } from 'lucide-react'
 
 import { AuthProvider, useAuth } from './context/AuthContext'
@@ -13,7 +14,9 @@ import Research from './pages/Research'
 import Admissions from './pages/Admissions'
 import AcademicsPage from './pages/AcademicsPage'
 import StudentLife from './pages/StudentLife'
+import DetailsPage from './pages/DetailsPage'
 import Study from './pages/Study'
+import Contact from './pages/Contact'
 import AboutZetech from './pages/AboutZetech'
 import AdminDashboard from './layouts/AdminDashboard'
 import Programmes from './pages/admin/Programmes'
@@ -22,6 +25,7 @@ import History from './pages/admin/History'
 import Faqadmin from './pages/admin/Faqadmin'
 import Scholarships from './pages/admin/Scholarships'
 import AdmissionsAdmin from './pages/admin/AdmissionsAdmin'
+import ResearchAdmin from './pages/admin/ResearchAdmin'
 import Login from './pages/admin/Login'
 
 
@@ -77,6 +81,9 @@ function AppRoutes() {
           <Route path="admissions" element={<Admissions />} />
           <Route path="academics" element={<AcademicsPage />} />
           <Route path="student-life" element={<StudentLife />} />
+          <Route path="contact" element={<Contact />} />
+          <Route path="/research/:id" element={<DetailsPage type="research" />} />
+          <Route path="/scholarships/:id" element={<DetailsPage type="scholarship" />} />
         </Route>
 
         
@@ -98,6 +105,7 @@ function AppRoutes() {
           <Route path="scholars" element={<Scholarships />} />
           <Route path="history" element={<History />} />
           <Route path="admissions" element={<AdmissionsAdmin />} />
+          <Route path="research" element={<ResearchAdmin />} />
         </Route>
 
         
@@ -113,8 +121,10 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <Toaster position="top-right" />
         <AppRoutes />
       </AuthProvider>
     </BrowserRouter>
   )
 }
+

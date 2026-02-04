@@ -18,15 +18,15 @@ export default function AdminDashboard() {
                 <div className="flex-1 flex flex-col min-h-screen">
                     <Header onMenuToggle={toggleSidebar} isSidebarOpen={isSidebarOpen} />
                     
-                    <main className="flex-1 p-4 lg:p-8">
-                        <div className="max-w-7xl mx-auto">
+                    <main className="flex-1 p-2 lg:p-8">
+                        <div className="w-full mx-auto">
                             <Outlet />
                         </div>
                     </main>
 
                     
-                    <footer className="bg-white border-t border-slate-200 py-4 px-6">
-                        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-2 text-sm text-slate-600">
+                    <footer className="bg-[#3b4d6e] border-t border-slate-200 py-4 px-6">
+                        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-2 text-sm text-white">
                             <p>© 2026 Zetech University. All rights reserved.</p>
                             <div className="flex gap-4">
                                 <a href="#" className="hover:text-orange-500 transition-colors">Privacy Policy</a>

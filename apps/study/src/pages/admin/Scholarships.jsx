@@ -1,605 +1,744 @@
-import React, { useState } from 'react';
-import { MdCardMembership, MdSave, MdAdd, MdDelete, MdEdit, MdClose, MdCheck, MdSearch, MdFilterList } from 'react-icons/md';
+import React, { useState } from "react";
+import {
+  Plus,
+  Trash2,
+  Save,
+  FileText,
+  Users,
+  Calendar,
+  DollarSign,
+  Eye,
+  GraduationCap,
+  CheckCircle,
+  Clock,
+  MapPin,
+  Facebook,
+  Twitter,
+  Globe,
+  Info,
+} from "lucide-react";
+import { toast } from "sonner";
 
-const Scholarships = () => {
-  const [scholarships, setScholarships] = useState([
-    {
-      id: 1,
-      name: 'Academic Excellence Award',
-      description: 'For students with A- and above',
-      discountType: 'percentage',
-      discountValue: 50,
-      eligibilityCriteria: 'GPA 3.7 and above',
-      status: 'active',
-      category: 'academic',
-      maxRecipients: 50,
-      currentRecipients: 32,
-      sponsor: 'University Fund',
-      startDate: '2024-01-01',
-      endDate: '2024-12-31'
-    },
-    {
-      id: 2,
-      name: 'Sports Merit Scholarship',
-      description: 'For exceptional athletes',
-      discountType: 'percentage',
-      discountValue: 30,
-      eligibilityCriteria: 'National level sports participation',
-      status: 'active',
-      category: 'sports',
-      maxRecipients: 25,
-      currentRecipients: 18,
-      sponsor: 'Alumni Association',
-      startDate: '2024-01-01',
-      endDate: '2024-12-31'
-    },
-    {
-      id: 3,
-      name: 'Financial Aid Program',
-      description: 'Need-based financial assistance',
-      discountType: 'fixed',
-      discountValue: 5000,
-      eligibilityCriteria: 'Family income below $30,000',
-      status: 'active',
-      category: 'financial',
-      maxRecipients: 100,
-      currentRecipients: 87,
-      sponsor: 'Government Grant',
-      startDate: '2024-01-01',
-      endDate: '2024-12-31'
-    },
-    {
-      id: 4,
-      name: 'Tech Innovation Scholarship',
-      description: 'For outstanding CS and Engineering students',
-      discountType: 'percentage',
-      discountValue: 40,
-      eligibilityCriteria: 'Outstanding project portfolio',
-      status: 'inactive',
-      category: 'academic',
-      maxRecipients: 15,
-      currentRecipients: 0,
-      sponsor: 'Tech Corp Partnership',
-      startDate: '2024-09-01',
-      endDate: '2025-08-31'
-    }
-  ]);
+const scholarshipInitialState = {
+  id: "",
+  name: "",
+  provider: "",
+  amount: "",
+  deadline: "",
+  eligibility: "Open to All",
+  description: "",
+  requirements: [""],
+};
 
-  const [showModal, setShowModal] = useState(false);
-  const [editingScholarship, setEditingScholarship] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState('all');
-  const [filterCategory, setFilterCategory] = useState('all');
-  
-  const [formData, setFormData] = useState({
-    name: '',
-    description: '',
-    discountType: 'percentage',
-    discountValue: '',
-    eligibilityCriteria: '',
-    status: 'active',
-    category: 'academic',
-    maxRecipients: '',
-    sponsor: '',
-    startDate: '',
-    endDate: ''
-  });
+const clubInitialState = {
+  name: "",
+  category: "Sports",
+  president: "",
+  schedule: "",
+  location: "",
+  description: "",
+  activities: [""],
+};
 
-  const categories = [
-    { value: 'academic', label: 'Academic' },
-    { value: 'sports', label: 'Sports' },
-    { value: 'financial', label: 'Financial Aid' },
-    { value: 'arts', label: 'Arts & Culture' },
-    { value: 'community', label: 'Community Service' },
-    { value: 'corporate', label: 'Corporate Sponsored' }
-  ];
+const CombinedPortal = () => {
+  const [activeTab, setActiveTab] = useState("scholarships"); // 'scholarships' or 'clubs'
+  const [isPreview, setIsPreview] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [scholarshipData, setScholarshipData] = useState(
+    scholarshipInitialState,
+  );
+  const [clubData, setClubData] = useState(clubInitialState);
 
-  const handleOpenModal = (scholarship = null) => {
-    if (scholarship) {
-      setEditingScholarship(scholarship);
-      setFormData({
-        name: scholarship.name,
-        description: scholarship.description,
-        discountType: scholarship.discountType,
-        discountValue: scholarship.discountValue,
-        eligibilityCriteria: scholarship.eligibilityCriteria,
-        status: scholarship.status,
-        category: scholarship.category,
-        maxRecipients: scholarship.maxRecipients,
-        sponsor: scholarship.sponsor,
-        startDate: scholarship.startDate,
-        endDate: scholarship.endDate
-      });
-    } else {
-      setEditingScholarship(null);
-      setFormData({
-        name: '',
-        description: '',
-        discountType: 'percentage',
-        discountValue: '',
-        eligibilityCriteria: '',
-        status: 'active',
-        category: 'academic',
-        maxRecipients: '',
-        sponsor: '',
-        startDate: '',
-        endDate: ''
-      });
-    }
-    setShowModal(true);
-  };
-
-  const handleCloseModal = () => {
-    setShowModal(false);
-    setEditingScholarship(null);
-  };
-
-  const handleInputChange = (e) => {
+  // Scholarship handlers
+  const handleScholarshipChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setScholarshipData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleRequirementChange = (index, value) => {
+    const newReqs = [...scholarshipData.requirements];
+    newReqs[index] = value;
+    setScholarshipData((prev) => ({ ...prev, requirements: newReqs }));
+  };
+
+  const addRequirement = () => {
+    setScholarshipData((prev) => ({
       ...prev,
-      [name]: value
+      requirements: [...prev.requirements, ""],
     }));
   };
 
-  const handleSubmit = (e) => {
+  const removeRequirement = (index) => {
+    const newReqs = scholarshipData.requirements.filter((_, i) => i !== index);
+    setScholarshipData((prev) => ({ ...prev, requirements: newReqs }));
+  };
+
+  const handleScholarshipSubmit = (e) => {
     e.preventDefault();
-    
-    if (editingScholarship) {
-      setScholarships(prev => prev.map(s => 
-        s.id === editingScholarship.id 
-          ? { ...s, ...formData }
-          : s
-      ));
-    } else {
-      const newScholarship = {
-        id: Math.max(...scholarships.map(s => s.id)) + 1,
-        ...formData,
-        currentRecipients: 0,
-        discountValue: Number(formData.discountValue),
-        maxRecipients: Number(formData.maxRecipients)
-      };
-      setScholarships(prev => [...prev, newScholarship]);
-    }
-    
-    handleCloseModal();
+    setLoading(true);
+    const simulate = new Promise((resolve) => setTimeout(resolve, 1500));
+    toast.promise(simulate, {
+      loading: "Creating scholarship...",
+      success: () => {
+        setScholarshipData(scholarshipInitialState);
+        setLoading(false);
+        return "Scholarship posted successfully!";
+      },
+      error: "Error creating scholarship.",
+      finally: () => setLoading(false),
+    });
   };
 
-  const handleDelete = (id) => {
-    if (window.confirm('Are you sure you want to delete this scholarship?')) {
-      setScholarships(prev => prev.filter(s => s.id !== id));
-    }
+  // Club handlers
+  const handleClubChange = (e) => {
+    const { name, value } = e.target;
+    setClubData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const toggleStatus = (id) => {
-    setScholarships(prev => prev.map(s => 
-      s.id === id 
-        ? { ...s, status: s.status === 'active' ? 'inactive' : 'active' }
-        : s
-    ));
+  const handleActivityChange = (index, value) => {
+    const newAct = [...clubData.activities];
+    newAct[index] = value;
+    setClubData((prev) => ({ ...prev, activities: newAct }));
   };
 
-  const filteredScholarships = scholarships.filter(s => {
-    const matchesSearch = s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         s.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = filterStatus === 'all' || s.status === filterStatus;
-    const matchesCategory = filterCategory === 'all' || s.category === filterCategory;
-    
-    return matchesSearch && matchesStatus && matchesCategory;
-  });
+  const addActivity = () =>
+    setClubData((prev) => ({ ...prev, activities: [...prev.activities, ""] }));
 
-  const stats = {
-    total: scholarships.length,
-    active: scholarships.filter(s => s.status === 'active').length,
-    totalRecipients: scholarships.reduce((sum, s) => sum + s.currentRecipients, 0),
-    totalCapacity: scholarships.reduce((sum, s) => sum + s.maxRecipients, 0)
+  const removeActivity = (index) =>
+    setClubData((prev) => ({
+      ...prev,
+      activities: clubData.activities.filter((_, i) => i !== index),
+    }));
+
+  const handleClubSubmit = (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setTimeout(() => {
+      toast.success("Club updated successfully!");
+      setLoading(false);
+      setClubData(clubInitialState);
+    }, 1000);
   };
 
-  return (
-    <div className="min-h-screen bg-slate-50 p-8">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-8">
-          <div>
-            <h1 className="text-3xl font-bold text-slate-800">Scholarship Schemes</h1>
-            <p className="text-slate-500 text-sm mt-1">Manage financial aid and corporate sponsorships</p>
-          </div>
-          <button 
-            onClick={() => handleOpenModal()}
-            className="bg-[#1a2b4c] text-white px-6 py-3 rounded-lg font-bold flex items-center gap-2 text-sm hover:bg-[#243a5e] transition-colors"
-          >
-            <MdAdd size={20}/> New Scheme
-          </button>
+  const renderScholarshipPreview = () => (
+    <div className="bg-white p-8 rounded-2xl shadow-xl border border-indigo-100 animate-in zoom-in-95 duration-300">
+      <div className="flex justify-between items-start mb-6 border-b border-slate-100 pb-6">
+        <div className="space-y-1">
+          <span className="bg-indigo-100 text-indigo-700 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">
+            Financial Aid
+          </span>
+          <h2 className="text-2xl font-black text-slate-800 uppercase tracking-tight">
+            {scholarshipData.name || "SCHOLARSHIP NAME"}
+          </h2>
+          <p className="text-indigo-600 font-semibold">
+            {scholarshipData.provider || "PROVIDER NAME"}
+          </p>
+          {scholarshipData.thumbnail?.preview && (
+            <img
+              src={scholarshipData.thumbnail.preview}
+              alt="Scholarship thumbnail"
+              className="w-full h-48 object-cover rounded-xl mb-6"
+            />
+          )}
         </div>
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-4 gap-4 mb-6">
-          <div className="bg-white rounded-xl p-5 border border-slate-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-slate-500 text-xs font-semibold uppercase">Total Schemes</p>
-                <p className="text-2xl font-bold text-slate-800 mt-1">{stats.total}</p>
-              </div>
-              <div className="bg-blue-100 p-3 rounded-lg">
-                <MdCardMembership className="text-blue-600" size={24}/>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl p-5 border border-slate-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-slate-500 text-xs font-semibold uppercase">Active Schemes</p>
-                <p className="text-2xl font-bold text-green-600 mt-1">{stats.active}</p>
-              </div>
-              <div className="bg-green-100 p-3 rounded-lg">
-                <MdCheck className="text-green-600" size={24}/>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl p-5 border border-slate-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-slate-500 text-xs font-semibold uppercase">Current Recipients</p>
-                <p className="text-2xl font-bold text-slate-800 mt-1">{stats.totalRecipients}</p>
-              </div>
-              <div className="bg-purple-100 p-3 rounded-lg">
-                <MdCardMembership className="text-purple-600" size={24}/>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl p-5 border border-slate-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-slate-500 text-xs font-semibold uppercase">Capacity Usage</p>
-                <p className="text-2xl font-bold text-slate-800 mt-1">
-                  {Math.round((stats.totalRecipients / stats.totalCapacity) * 100)}%
-                </p>
-              </div>
-              <div className="bg-orange-100 p-3 rounded-lg">
-                <MdFilterList className="text-orange-600" size={24}/>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Search and Filters */}
-        <div className="bg-white rounded-xl p-4 mb-6 border border-slate-200">
-          <div className="flex gap-4">
-            <div className="flex-1 relative">
-              <MdSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20}/>
-              <input
-                type="text"
-                placeholder="Search scholarships..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-              />
-            </div>
-            
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-            >
-              <option value="all">All Status</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-            </select>
-
-            <select
-              value={filterCategory}
-              onChange={(e) => setFilterCategory(e.target.value)}
-              className="px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-            >
-              <option value="all">All Categories</option>
-              {categories.map(cat => (
-                <option key={cat.value} value={cat.value}>{cat.label}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {/* Scholarships Table */}
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-          <table className="w-full text-left border-collapse">
-            <thead className="bg-slate-50 border-b border-slate-200">
-              <tr>
-                <th className="p-4 text-xs font-bold text-slate-400 uppercase">Scholarship Name</th>
-                <th className="p-4 text-xs font-bold text-slate-400 uppercase">Category</th>
-                <th className="p-4 text-xs font-bold text-slate-400 uppercase">Discount</th>
-                <th className="p-4 text-xs font-bold text-slate-400 uppercase">Recipients</th>
-                <th className="p-4 text-xs font-bold text-slate-400 uppercase">Sponsor</th>
-                <th className="p-4 text-xs font-bold text-slate-400 uppercase">Status</th>
-                <th className="p-4 text-xs font-bold text-slate-400 uppercase">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {filteredScholarships.length === 0 ? (
-                <tr>
-                  <td colSpan="7" className="p-8 text-center text-slate-500">
-                    No scholarships found
-                  </td>
-                </tr>
-              ) : (
-                filteredScholarships.map((scholarship) => (
-                  <tr key={scholarship.id} className="hover:bg-slate-50/50">
-                    <td className="p-4">
-                      <p className="font-bold text-slate-800">{scholarship.name}</p>
-                      <p className="text-xs text-slate-500 font-medium">{scholarship.description}</p>
-                      <p className="text-xs text-slate-400 mt-1">{scholarship.eligibilityCriteria}</p>
-                    </td>
-                    <td className="p-4">
-                      <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded-md text-xs font-semibold capitalize">
-                        {scholarship.category}
-                      </span>
-                    </td>
-                    <td className="p-4 text-sm font-semibold text-blue-600">
-                      {scholarship.discountType === 'percentage' 
-                        ? `${scholarship.discountValue}%` 
-                        : `$${scholarship.discountValue.toLocaleString()}`
-                      }
-                    </td>
-                    <td className="p-4">
-                      <div className="flex flex-col">
-                        <span className="text-sm font-semibold text-slate-800">
-                          {scholarship.currentRecipients} / {scholarship.maxRecipients}
-                        </span>
-                        <div className="w-24 bg-slate-200 rounded-full h-1.5 mt-1">
-                          <div 
-                            className="bg-blue-600 h-1.5 rounded-full"
-                            style={{ width: `${(scholarship.currentRecipients / scholarship.maxRecipients) * 100}%` }}
-                          />
-                        </div>
-                      </div>
-                    </td>
-                    <td className="p-4 text-sm text-slate-600">{scholarship.sponsor}</td>
-                    <td className="p-4">
-                      <button
-                        onClick={() => toggleStatus(scholarship.id)}
-                        className={`px-2 py-0.5 rounded-md text-[10px] font-black uppercase ${
-                          scholarship.status === 'active'
-                            ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                            : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                        }`}
-                      >
-                        {scholarship.status}
-                      </button>
-                    </td>
-                    <td className="p-4 flex gap-2">
-                      <button 
-                        onClick={() => handleOpenModal(scholarship)}
-                        className="text-slate-400 hover:text-blue-600 transition-colors"
-                      >
-                        <MdEdit size={20}/>
-                      </button>
-                      <button 
-                        onClick={() => handleDelete(scholarship.id)}
-                        className="text-slate-400 hover:text-red-500 transition-colors"
-                      >
-                        <MdDelete size={20}/>
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+        <div className="text-right">
+          <p className="text-slate-400 text-xs font-bold uppercase">Deadline</p>
+          <p className="text-red-500 font-bold">
+            {scholarshipData.deadline || "TBA"}
+          </p>
         </div>
       </div>
 
-      {/* Modal */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-white border-b border-slate-200 p-6 flex justify-between items-center">
-              <h2 className="text-2xl font-bold text-slate-800">
-                {editingScholarship ? 'Edit Scholarship' : 'Create New Scholarship'}
-              </h2>
-              <button 
-                onClick={handleCloseModal}
-                className="text-slate-400 hover:text-slate-600"
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+          <p className="text-slate-400 text-[10px] font-bold uppercase mb-1 flex items-center gap-1">
+            <DollarSign size={10} /> Funding Amount
+          </p>
+          <p className="text-lg font-bold text-slate-800">
+            {scholarshipData.amount || "N/A"}
+          </p>
+        </div>
+        <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+          <p className="text-slate-400 text-[10px] font-bold uppercase mb-1 flex items-center gap-1">
+            <GraduationCap size={10} /> Eligibility
+          </p>
+          <p className="text-lg font-bold text-slate-800">
+            {scholarshipData.eligibility}
+          </p>
+        </div>
+        <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+          <p className="text-slate-400 text-[10px] font-bold uppercase mb-1 flex items-center gap-1">
+            <CheckCircle size={10} /> Type
+          </p>
+          <p className="text-lg font-bold text-slate-800">Merit-Based</p>
+        </div>
+      </div>
+
+      <div className="space-y-6">
+        <div>
+          <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 border-b border-slate-100 pb-1">
+            About this Scholarship
+          </h3>
+          <p className="text-slate-600 leading-relaxed whitespace-pre-wrap">
+            {scholarshipData.description || "No description provided."}
+          </p>
+        </div>
+        <div>
+          <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 border-b border-slate-100 pb-1">
+            Application Requirements
+          </h3>
+          <ul className="grid grid-cols-1 gap-3">
+            {scholarshipData.requirements.map(
+              (req, i) =>
+                req && (
+                  <li
+                    key={i}
+                    className="flex items-center gap-3 text-slate-700 bg-indigo-50/50 p-3 rounded-lg border border-indigo-50"
+                  >
+                    <div className="w-5 h-5 rounded-full bg-indigo-500 text-white flex items-center justify-center text-[10px] font-bold">
+                      {i + 1}
+                    </div>
+                    {req}
+                  </li>
+                ),
+            )}
+          </ul>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderScholarshipForm = () => (
+    <form onSubmit={handleScholarshipSubmit} className="space-y-6">
+      <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="md:col-span-2">
+          <h2 className="font-bold text-slate-800 flex items-center gap-2 mb-2 underline decoration-indigo-500 decoration-2 underline-offset-4">
+            <FileText size={18} className="text-indigo-500" /> Scholarship
+            Identity
+          </h2>
+        </div>
+        <div className="space-y-1">
+          <label className="text-xs font-bold text-slate-500 uppercase">
+            Scholarship Name *
+          </label>
+          <input
+            name="name"
+            value={scholarshipData.name}
+            onChange={handleScholarshipChange}
+            className="w-full border p-2 rounded focus:ring-2 focus:ring-indigo-500 outline-none"
+            placeholder="e.g. Presidential Excellence Award"
+            required
+          />
+        </div>
+        <div className="space-y-1">
+          <label className="text-xs font-bold text-slate-500 uppercase">
+            Provider / Organization *
+          </label>
+          <input
+            name="provider"
+            value={scholarshipData.provider}
+            onChange={handleScholarshipChange}
+            className="w-full border p-2 rounded focus:ring-2 focus:ring-indigo-500 outline-none"
+            placeholder="e.g. National Education Foundation"
+            required
+          />
+        </div>
+        <div className="space-y-1">
+          <label className="text-xs font-bold text-slate-500 uppercase">
+            Funding Amount *
+          </label>
+          <input
+            name="amount"
+            value={scholarshipData.amount}
+            onChange={handleScholarshipChange}
+            className="w-full border p-2 rounded focus:ring-2 focus:ring-indigo-500 outline-none"
+            placeholder="e.g. $10,000 / Full Tuition"
+            required
+          />
+        </div>
+        <div className="space-y-1">
+          <label className="text-xs font-bold text-slate-500 uppercase">
+            Application Deadline *
+          </label>
+          <input
+            name="deadline"
+            type="date"
+            value={scholarshipData.deadline}
+            onChange={handleScholarshipChange}
+            className="w-full border p-2 rounded focus:ring-2 focus:ring-indigo-500 outline-none"
+            required
+          />
+        </div>
+        <div className="space-y-1 md:col-span-2">
+          <label className="text-xs font-bold text-slate-500 uppercase">
+            Eligibility Criteria
+          </label>
+          <input
+            name="eligibility"
+            value={scholarshipData.eligibility}
+            onChange={handleScholarshipChange}
+            className="w-full border p-2 rounded focus:ring-2 focus:ring-indigo-500 outline-none"
+            placeholder="e.g. Undergraduate students with GPA > 3.5"
+          />
+        </div>
+      </div>
+
+      <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 space-y-4">
+        <h2 className="font-bold text-slate-800 flex items-center gap-2">
+          <Plus size={18} className="text-emerald-500" /> Scholarship Details &
+          Requirements
+        </h2>
+        <ImageUpload
+        label="Scholarship Thumbnail"
+        image={scholarshipData.thumbnail}
+        setImage={(img) =>
+          setScholarshipData((prev) => ({ ...prev, thumbnail: img }))
+        }
+      />
+        <div className="space-y-1">
+          <label className="text-xs font-bold text-slate-500 uppercase">
+            Full Description
+          </label>
+          <textarea
+            name="description"
+            value={scholarshipData.description}
+            onChange={handleScholarshipChange}
+            rows={4}
+            className="w-full border p-2 rounded focus:ring-2 focus:ring-indigo-500 outline-none"
+            placeholder="Provide background and context for this funding opportunity..."
+          />
+        </div>
+        <div className="space-y-2">
+          <label className="text-xs font-bold text-slate-500 uppercase block">
+            Specific Requirements
+          </label>
+          {scholarshipData.requirements.map((req, index) => (
+            <div key={index} className="flex gap-2">
+              <input
+                value={req}
+                onChange={(e) => handleRequirementChange(index, e.target.value)}
+                className="flex-1 border p-2 rounded focus:ring-2 focus:ring-indigo-500 outline-none"
+                placeholder={`Requirement ${index + 1}`}
+              />
+              {scholarshipData.requirements.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => removeRequirement(index)}
+                  className="p-2 text-red-400 hover:bg-red-50 rounded"
+                >
+                  <Trash2 size={16} />
+                </button>
+              )}
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={addRequirement}
+            className="mt-2 flex items-center gap-2 text-sm font-bold text-indigo-600 hover:text-indigo-700"
+          >
+            <Plus size={16} /> Add Another Requirement
+          </button>
+        </div>
+      </div>
+
+      <div className="flex justify-end pt-4 pb-12">
+        <button
+          type="submit"
+          disabled={loading}
+          className={`px-10 py-4 rounded-xl font-black uppercase tracking-widest flex items-center gap-2 transition-all shadow-xl hover:shadow-indigo-200 ${loading ? "bg-slate-400 cursor-not-allowed" : "bg-indigo-600 hover:bg-indigo-700 text-white"}`}
+        >
+          <Save size={18} />
+          {loading ? "Posting..." : "Publish Scholarship"}
+        </button>
+      </div>
+    </form>
+  );
+  const ImageUpload = ({ label, image, setImage }) => {
+    const handleImageChange = (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      setImage({
+        file,
+        preview: URL.createObjectURL(file),
+      });
+    };
+
+    return (
+      <div className="space-y-2">
+        <label className="text-xs font-bold text-slate-500 uppercase">
+          {label}
+        </label>
+
+        <div className="flex items-center gap-4">
+          <div className="w-24 h-24 rounded-xl border-2 border-dashed border-slate-300 flex items-center justify-center overflow-hidden bg-slate-50">
+            {image?.preview ? (
+              <img
+                src={image.preview}
+                alt="Thumbnail preview"
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <span className="text-xs text-slate-400 text-center px-2">
+                No image
+              </span>
+            )}
+          </div>
+
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleImageChange}
+            className="text-sm"
+          />
+        </div>
+      </div>
+    );
+  };
+
+  const renderClubPreview = () => (
+    <div className="bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-100 animate-in zoom-in-95 duration-300">
+      <div className="h-32 bg-gradient-to-r from-emerald-500 to-teal-600 relative">
+        <div className="absolute -bottom-8 left-8 w-24 h-24 bg-white rounded-2xl shadow-lg border-4 border-white flex items-center justify-center overflow-hidden">
+          {clubData.thumbnail?.preview ? (
+            <img
+              src={clubData.thumbnail.preview}
+              alt="Club logo"
+              className="w-full h-full object-cover"
+            />
+          ) : (
+            <span className="text-xs text-slate-400">No logo</span>
+          )}
+        </div>
+      </div>
+      <div className="pt-12 px-8 pb-8">
+        <div className="flex justify-between items-start mb-6">
+          <div>
+            <h2 className="text-3xl font-black text-slate-800 tracking-tight">
+              {clubData.name || "CLUB NAME"}
+            </h2>
+            <span className="inline-block bg-emerald-100 text-emerald-700 text-xs font-bold px-3 py-1 rounded-full mt-2">
+              {clubData.category}
+            </span>
+          </div>
+          <div className="flex gap-2">
+            <button className="p-2 bg-slate-100 rounded-lg text-slate-400 hover:text-emerald-500 transition-colors">
+              <Facebook size={20} />
+            </button>
+            <button className="p-2 bg-slate-100 rounded-lg text-slate-400 hover:text-emerald-500 transition-colors">
+              <Twitter size={20} />
+            </button>
+            <button className="p-2 bg-slate-100 rounded-lg text-slate-400 hover:text-emerald-500 transition-colors">
+              <Globe size={20} />
+            </button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="space-y-6">
+            <div>
+              <h3 className="flex items-center gap-2 text-slate-800 font-bold mb-3">
+                <Info size={18} className="text-emerald-500" /> About Us
+              </h3>
+              <p className="text-slate-600 leading-relaxed text-sm whitespace-pre-wrap">
+                {clubData.description ||
+                  "Describe the club's mission and culture here."}
+              </p>
+            </div>
+            <div>
+              <h3 className="flex items-center gap-2 text-slate-800 font-bold mb-3">
+                <Users size={18} className="text-emerald-500" /> Core Activities
+              </h3>
+              <ul className="space-y-2">
+                {clubData.activities.map(
+                  (act, i) =>
+                    act && (
+                      <li
+                        key={i}
+                        className="flex items-center gap-2 text-sm text-slate-600 border-l-2 border-emerald-500 pl-3 py-1 bg-emerald-50/30"
+                      >
+                        {act}
+                      </li>
+                    ),
+                )}
+              </ul>
+            </div>
+          </div>
+          <div className="space-y-4">
+            <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 space-y-4">
+              <h3 className="text-slate-800 font-bold text-lg">Quick Facts</h3>
+              <div className="space-y-3">
+                <div className="flex items-start gap-3">
+                  <Users size={18} className="text-emerald-600 mt-0.5" />
+                  <div>
+                    <p className="text-[10px] uppercase font-bold text-slate-400">
+                      Club President
+                    </p>
+                    <p className="text-sm font-semibold text-slate-700">
+                      {clubData.president || "Pending"}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <Clock size={18} className="text-emerald-600 mt-0.5" />
+                  <div>
+                    <p className="text-[10px] uppercase font-bold text-slate-400">
+                      Meeting Schedule
+                    </p>
+                    <p className="text-sm font-semibold text-slate-700">
+                      {clubData.schedule || "TBD"}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <MapPin size={18} className="text-emerald-600 mt-0.5" />
+                  <div>
+                    <p className="text-[10px] uppercase font-bold text-slate-400">
+                      Primary Location
+                    </p>
+                    <p className="text-sm font-semibold text-slate-700">
+                      {clubData.location || "On Campus"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl shadow-lg shadow-emerald-100 transition-all active:scale-95">
+                Join Organization
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderClubForm = () => (
+    <form onSubmit={handleClubSubmit} className="space-y-6">
+      <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="md:col-span-2">
+          <h2 className="font-bold text-slate-800 flex items-center gap-2 mb-2">
+            <Users size={18} className="text-emerald-500" /> Organization
+            Profile
+          </h2>
+        </div>
+        <div className="space-y-1">
+          <label className="text-xs font-bold text-slate-500 uppercase">
+            Club Name *
+          </label>
+          <input
+            name="name"
+            value={clubData.name}
+            onChange={handleClubChange}
+            className="w-full border p-2 rounded focus:ring-2 focus:ring-emerald-500 outline-none"
+            placeholder="e.g. Coding & Robotics Society"
+            required
+          />
+          <ImageUpload
+            label="Club Logo / Thumbnail"
+            image={clubData.thumbnail}
+            setImage={(img) =>
+              setClubData((prev) => ({ ...prev, thumbnail: img }))
+            }
+          />
+        </div>
+        <div className="space-y-1">
+          <label className="text-xs font-bold text-slate-500 uppercase">
+            Category *
+          </label>
+          <select
+            name="category"
+            value={clubData.category}
+            onChange={handleClubChange}
+            className="w-full border p-2 rounded focus:ring-2 focus:ring-emerald-500 outline-none"
+          >
+            <option value="Sports">Sports & Fitness</option>
+            <option value="Tech">Technology & Innovation</option>
+            <option value="Arts">Arts & Culture</option>
+            <option value="Academic">Academic Support</option>
+            <option value="Volunteer">Volunteer & Charity</option>
+          </select>
+        </div>
+        <div className="space-y-1">
+          <label className="text-xs font-bold text-slate-500 uppercase">
+            President / Leader *
+          </label>
+          <input
+            name="president"
+            value={clubData.president}
+            onChange={handleClubChange}
+            className="w-full border p-2 rounded focus:ring-2 focus:ring-emerald-500 outline-none"
+            required
+          />
+        </div>
+        <div className="space-y-1">
+          <label className="text-xs font-bold text-slate-500 uppercase">
+            Meeting Schedule
+          </label>
+          <input
+            name="schedule"
+            value={clubData.schedule}
+            onChange={handleClubChange}
+            className="w-full border p-2 rounded focus:ring-2 focus:ring-emerald-500 outline-none"
+            placeholder="e.g. Wed 4:00 PM - 6:00 PM"
+          />
+        </div>
+        <div className="space-y-1 md:col-span-2">
+          <label className="text-xs font-bold text-slate-500 uppercase">
+            Primary Location
+          </label>
+          <input
+            name="location"
+            value={clubData.location}
+            onChange={handleClubChange}
+            className="w-full border p-2 rounded focus:ring-2 focus:ring-emerald-500 outline-none"
+            placeholder="e.g. Student Center Room 201"
+          />
+        </div>
+      </div>
+
+      <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 space-y-4">
+        <h2 className="font-bold text-slate-800 flex items-center gap-2">
+          <Info size={18} className="text-emerald-500" /> Description &
+          Activities
+        </h2>
+        <div className="space-y-1">
+          <label className="text-xs font-bold text-slate-500 uppercase">
+            About the Club
+          </label>
+          <textarea
+            name="description"
+            value={clubData.description}
+            onChange={handleClubChange}
+            rows={4}
+            className="w-full border p-2 rounded focus:ring-2 focus:ring-emerald-500 outline-none"
+            placeholder="History, mission and target audience..."
+          />
+        </div>
+        <div className="space-y-2">
+          <label className="text-xs font-bold text-slate-500 uppercase block">
+            Regular Activities
+          </label>
+          {clubData.activities.map((act, index) => (
+            <div key={index} className="flex gap-2">
+              <input
+                value={act}
+                onChange={(e) => handleActivityChange(index, e.target.value)}
+                className="flex-1 border p-2 rounded focus:ring-2 focus:ring-emerald-500 outline-none"
+                placeholder={`Activity ${index + 1}`}
+              />
+              {clubData.activities.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => removeActivity(index)}
+                  className="p-2 text-red-400 hover:bg-red-50 rounded"
+                >
+                  <Trash2 size={16} />
+                </button>
+              )}
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={addActivity}
+            className="mt-2 flex items-center gap-2 text-sm font-bold text-emerald-600 hover:text-emerald-700"
+          >
+            <Plus size={16} /> Add Activity
+          </button>
+        </div>
+      </div>
+
+      <div className="flex justify-end pt-4 pb-12">
+        <button
+          type="submit"
+          disabled={loading}
+          className={`px-10 py-3 rounded-lg font-bold flex items-center gap-2 transition-all shadow-lg ${loading ? "bg-slate-400 cursor-not-allowed" : "bg-emerald-600 hover:bg-emerald-700 text-white"}`}
+        >
+          <Save size={18} />
+          {loading ? "Saving..." : "Register Organization"}
+        </button>
+      </div>
+    </form>
+  );
+
+  return (
+    <div className="p-4 md:p-8 animate-in fade-in duration-500 bg-gradient-to-br from-slate-50 to-slate-100 min-h-screen">
+      <div className="max-w-4xl mx-auto">
+        {/* Header with Toggle */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-slate-900">
+              {activeTab === "scholarships"
+                ? "Scholarship Portal"
+                : "Student Life & Organizations"}
+            </h1>
+            <p className="text-slate-500 text-sm">
+              {activeTab === "scholarships"
+                ? "Manage student financial aid and grants"
+                : "Register and manage campus clubs, groups and societies"}
+            </p>
+          </div>
+
+          <div className="flex gap-3">
+            {/* Tab Toggle */}
+            <div className="inline-flex bg-white rounded-lg p-1 shadow-sm border border-slate-200">
+              <button
+                onClick={() => {
+                  setActiveTab("scholarships");
+                  setIsPreview(false);
+                }}
+                className={`px-4 py-2 rounded-md font-semibold text-sm transition-all ${
+                  activeTab === "scholarships"
+                    ? "bg-indigo-600 text-white shadow-sm"
+                    : "text-slate-600 hover:text-slate-900"
+                }`}
               >
-                <MdClose size={24}/>
+                <GraduationCap size={16} className="inline mr-1" />
+                Scholarships
+              </button>
+              <button
+                onClick={() => {
+                  setActiveTab("clubs");
+                  setIsPreview(false);
+                }}
+                className={`px-4 py-2 rounded-md font-semibold text-sm transition-all ${
+                  activeTab === "clubs"
+                    ? "bg-emerald-600 text-white shadow-sm"
+                    : "text-slate-600 hover:text-slate-900"
+                }`}
+              >
+                <Users size={16} className="inline mr-1" />
+                Clubs
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="col-span-2">
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    Scholarship Name *
-                  </label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                    placeholder="e.g., Academic Excellence Award"
-                  />
-                </div>
-
-                <div className="col-span-2">
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    Description *
-                  </label>
-                  <textarea
-                    name="description"
-                    value={formData.description}
-                    onChange={handleInputChange}
-                    required
-                    rows="3"
-                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                    placeholder="Brief description of the scholarship"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    Category *
-                  </label>
-                  <select
-                    name="category"
-                    value={formData.category}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                  >
-                    {categories.map(cat => (
-                      <option key={cat.value} value={cat.value}>{cat.label}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    Status *
-                  </label>
-                  <select
-                    name="status"
-                    value={formData.status}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                  >
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    Discount Type *
-                  </label>
-                  <select
-                    name="discountType"
-                    value={formData.discountType}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                  >
-                    <option value="percentage">Percentage</option>
-                    <option value="fixed">Fixed Amount</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    Discount Value *
-                  </label>
-                  <input
-                    type="number"
-                    name="discountValue"
-                    value={formData.discountValue}
-                    onChange={handleInputChange}
-                    required
-                    min="0"
-                    max={formData.discountType === 'percentage' ? '100' : undefined}
-                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                    placeholder={formData.discountType === 'percentage' ? '0-100' : 'Amount'}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    Max Recipients *
-                  </label>
-                  <input
-                    type="number"
-                    name="maxRecipients"
-                    value={formData.maxRecipients}
-                    onChange={handleInputChange}
-                    required
-                    min="1"
-                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                    placeholder="e.g., 50"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    Sponsor *
-                  </label>
-                  <input
-                    type="text"
-                    name="sponsor"
-                    value={formData.sponsor}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                    placeholder="e.g., University Fund"
-                  />
-                </div>
-
-                <div className="col-span-2">
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    Eligibility Criteria *
-                  </label>
-                  <textarea
-                    name="eligibilityCriteria"
-                    value={formData.eligibilityCriteria}
-                    onChange={handleInputChange}
-                    required
-                    rows="2"
-                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                    placeholder="e.g., GPA 3.7 and above"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    Start Date *
-                  </label>
-                  <input
-                    type="date"
-                    name="startDate"
-                    value={formData.startDate}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    End Date *
-                  </label>
-                  <input
-                    type="date"
-                    name="endDate"
-                    value={formData.endDate}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                  />
-                </div>
-              </div>
-
-              <div className="flex gap-3 pt-4">
-                <button
-                  type="submit"
-                  className="flex-1 bg-[#1a2b4c] text-white px-6 py-3 rounded-lg font-bold hover:bg-[#243a5e] transition-colors"
-                >
-                  {editingScholarship ? 'Update Scholarship' : 'Create Scholarship'}
-                </button>
-                <button
-                  type="button"
-                  onClick={handleCloseModal}
-                  className="px-6 py-3 border border-slate-300 rounded-lg font-bold text-slate-700 hover:bg-slate-50 transition-colors"
-                >
-                  Cancel
-                </button>
-              </div>
-            </form>
+            {/* Preview Toggle */}
+            <button
+              type="button"
+              onClick={() => setIsPreview(!isPreview)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-all shadow-sm ${
+                isPreview
+                  ? (activeTab === "scholarships"
+                      ? "bg-indigo-600"
+                      : "bg-emerald-600") + " text-white"
+                  : "bg-white text-slate-700 border border-slate-200"
+              }`}
+            >
+              <Eye size={18} /> {isPreview ? "Edit" : "Preview"}
+            </button>
           </div>
         </div>
-      )}
+
+        {/* Content Area */}
+        {activeTab === "scholarships"
+          ? isPreview
+            ? renderScholarshipPreview()
+            : renderScholarshipForm()
+          : isPreview
+            ? renderClubPreview()
+            : renderClubForm()}
+      </div>
     </div>
   );
 };
 
-export default Scholarships;
+export default CombinedPortal;

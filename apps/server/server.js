@@ -8,7 +8,8 @@ const { authRoutes} = require('./models/auth');
 
 const faqRoutes = require('./routes/faqRoutes');
 const chatbot = require('./routes/chatbot');
-
+const researchRoutes = require('./routes/research');
+const timetableRoutes = require('./routes/timetableRoutes');
 const app = express();
 
 
@@ -26,6 +27,8 @@ app.use('/api', routes);
 app.use('/api/auth', authRoutes);
 app.use('/api/faqs', faqRoutes);
 app.use('/api/chatbot', chatbot);
+app.use('/api/research', researchRoutes);
+app.use('/api/timetable', timetableRoutes);
 
 
 const PORT = process.env.PORT || 5000;

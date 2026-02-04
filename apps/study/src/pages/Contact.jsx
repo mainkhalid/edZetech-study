@@ -37,44 +37,6 @@ const Contact = () => {
     }, 3000);
   };
 
-  const contactInfo = [
-    {
-      icon: <MapPin size={24} />,
-      title: 'Visit Us',
-      details: [
-        'Main Campus: Thika Road, Ruiru',
-        'City Campus: Nairobi CBD'
-      ],
-      color: 'orange'
-    },
-    {
-      icon: <Phone size={24} />,
-      title: 'Call Us',
-      details: [
-        '+254 709 912 000',
-        '+254 734 600 600'
-      ],
-      color: 'blue'
-    },
-    {
-      icon: <Mail size={24} />,
-      title: 'Email Us',
-      details: [
-        'info@zetech.ac.ke',
-        'admissions@zetech.ac.ke'
-      ],
-      color: 'green'
-    },
-    {
-      icon: <Clock size={24} />,
-      title: 'Working Hours',
-      details: [
-        'Mon - Fri: 8:00 AM - 5:00 PM',
-        'Sat: 8:00 AM - 1:00 PM'
-      ],
-      color: 'purple'
-    }
-  ];
 
   const departments = [
     { name: 'Admissions Office', icon: <Users size={20} />, email: 'admissions@zetech.ac.ke' },
@@ -86,35 +48,7 @@ const Contact = () => {
   return (
     <div className="min-h-screen bg-slate-50">
       
-      {/* Hero Section */}
-      <div className="bg-gradient-to-r from-[#1a2b4c] to-[#2d4263] text-white py-16">
-        <div className="max-w-7xl mx-auto px-4">
-          <h1 className="text-4xl md:text-5xl font-extrabold mb-4">Contact Us</h1>
-          <p className="text-xl text-gray-300 max-w-3xl">
-            We're here to help. Reach out to us for admissions, inquiries, or any questions you may have
-          </p>
-        </div>
-      </div>
-
-      {/* Contact Info Cards */}
-      <div className="max-w-7xl mx-auto px-4 -mt-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-          {contactInfo.map((info, index) => (
-            <div 
-              key={index}
-              className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow"
-            >
-              <div className={`w-14 h-14 rounded-full bg-${info.color}-100 flex items-center justify-center mb-4 text-${info.color}-600`}>
-                {info.icon}
-              </div>
-              <h3 className="text-lg font-bold text-[#1a2b4c] mb-3">{info.title}</h3>
-              {info.details.map((detail, idx) => (
-                <p key={idx} className="text-sm text-gray-600 mb-1">{detail}</p>
-              ))}
-            </div>
-          ))}
-        </div>
-      </div>
+   
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 py-12">
@@ -146,7 +80,7 @@ const Contact = () => {
                         onChange={handleChange}
                         required
                         className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400"
-                        placeholder="John Doe"
+                        placeholder="Walter White"
                       />
                     </div>
                     <div>
@@ -159,8 +93,8 @@ const Contact = () => {
                         value={formData.email}
                         onChange={handleChange}
                         required
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-400"
-                        placeholder="john@example.com"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-200"
+                        placeholder="student@gmail.com"
                       />
                     </div>
                   </div>

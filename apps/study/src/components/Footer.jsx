@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { 
   Facebook, 
   Twitter, 
@@ -25,7 +26,7 @@ const Footer = () => {
     resources: [
       { name: 'Library', href: '#' },
       { name: 'Research Support', href: '#' },
-      { name: 'Career Services', href: '#' },
+      { name: 'Contacts', href: '/contact' },
       { name: 'FAQs', href: '/faq' },
       { name: 'Downloads', href: '#' },
     ]

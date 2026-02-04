@@ -1,640 +1,404 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { 
-  MdUpload, MdDownload, MdDelete, MdEdit, MdAdd, MdClose,
-  MdSearch, MdSchool, MdAttachMoney, MdSchedule, MdFolder,
-  MdVisibility, MdCloudUpload, MdDescription
-} from 'react-icons/md';
+  Upload, 
+  Calendar, 
+  Save, 
+  Eye, 
+  Download, 
+  CheckCircle2,
+  AlertCircle,
+  Clock,
+  Trash2,
+  FileSpreadsheet,
+  School
+} from 'lucide-react';
+import { toast } from 'sonner';
+import api from '../../api/axios';
 
-const AdmissionsAdmin = () => {
-  const [programmes, setProgrammes] = useState([
-    {
-      id: 1,
-      level: 'certificate',
-      name: 'Certificate in Information Technology',
-      feeStructure: {
-        uploaded: true,
-        fileName: 'IT_Certificate_Fees_2024.xlsx',
-        uploadDate: '2024-01-15',
-        fileUrl: '#'
-      },
-      timetable: {
-        uploaded: true,
-        fileName: 'IT_Certificate_Timetable_Sem1.xlsx',
-        uploadDate: '2024-01-20',
-        fileUrl: '#'
-      },
-      status: 'active'
-    },
-    {
-      id: 2,
-      level: 'certificate',
-      name: 'Certificate in Business Management',
-      feeStructure: {
-        uploaded: true,
-        fileName: 'Business_Certificate_Fees_2024.xlsx',
-        uploadDate: '2024-01-15',
-        fileUrl: '#'
-      },
-      timetable: {
-        uploaded: false,
-        fileName: null,
-        uploadDate: null,
-        fileUrl: null
-      },
-      status: 'active'
-    },
-    {
-      id: 3,
-      level: 'diploma',
-      name: 'Diploma in Software Engineering',
-      feeStructure: {
-        uploaded: true,
-        fileName: 'Software_Diploma_Fees_2024.xlsx',
-        uploadDate: '2024-01-10',
-        fileUrl: '#'
-      },
-      timetable: {
-        uploaded: true,
-        fileName: 'Software_Diploma_Timetable_2024.xlsx',
-        uploadDate: '2024-01-18',
-        fileUrl: '#'
-      },
-      status: 'active'
-    },
-    {
-      id: 4,
-      level: 'diploma',
-      name: 'Diploma in Accounting',
-      feeStructure: {
-        uploaded: true,
-        fileName: 'Accounting_Diploma_Fees_2024.xlsx',
-        uploadDate: '2024-01-12',
-        fileUrl: '#'
-      },
-      timetable: {
-        uploaded: false,
-        fileName: null,
-        uploadDate: null,
-        fileUrl: null
-      },
-      status: 'active'
-    },
-    {
-      id: 5,
-      level: 'degree',
-      name: 'Bachelor of Science in Computer Science',
-      feeStructure: {
-        uploaded: true,
-        fileName: 'CS_Degree_Fees_2024.xlsx',
-        uploadDate: '2024-01-05',
-        fileUrl: '#'
-      },
-      timetable: {
-        uploaded: true,
-        fileName: 'CS_Degree_Timetable_2024.xlsx',
-        uploadDate: '2024-01-16',
-        fileUrl: '#'
-      },
-      status: 'active'
-    },
-    {
-      id: 6,
-      level: 'degree',
-      name: 'Bachelor of Business Administration',
-      feeStructure: {
-        uploaded: false,
-        fileName: null,
-        uploadDate: null,
-        fileUrl: null
-      },
-      timetable: {
-        uploaded: false,
-        fileName: null,
-        uploadDate: null,
-        fileUrl: null
-      },
-      status: 'active'
-    }
-  ]);
+const schoolOptions = [
+  { id: 'ict', name: 'School of ICT, Media and Engineering' },
+  { id: 'business', name: 'School of Business and Economics' },
+  { id: 'law', name: 'School of Law' },
+  { id: 'health', name: 'School of Health Sciences' },
+  { id: 'education', name: 'School of Education, Arts & Social Science' }
+];
 
-  const [showModal, setShowModal] = useState(false);
-  const [editingProgramme, setEditingProgramme] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterLevel, setFilterLevel] = useState('all');
-  const [uploadType, setUploadType] = useState(null); // 'feeStructure' or 'timetable'
-  const [selectedProgramme, setSelectedProgramme] = useState(null);
+const initialState = {
+  school: 'ict',
+  academicYear: '2024/2025',
+  semester: 'Semester 1',
+  timetableFile: null,
+  timetableName: '',
+  notes: ''
+};
+
+const TimetableAdmin = () => {
+  const [isPreview, setIsPreview] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [data, setData] = useState(initialState);
+  const [uploadedTimetable, setUploadedTimetable] = useState(null);
   
-  const [formData, setFormData] = useState({
-    level: 'certificate',
-    name: '',
-    status: 'active'
-  });
+  const timetableInputRef = useRef(null);
 
-  const levels = [
-    { value: 'certificate', label: 'Certificate', color: 'blue' },
-    { value: 'diploma', label: 'Diploma', color: 'green' },
-    { value: 'degree', label: 'Degree', color: 'purple' }
-  ];
-
-  const handleOpenModal = (programme = null) => {
-    if (programme) {
-      setEditingProgramme(programme);
-      setFormData({
-        level: programme.level,
-        name: programme.name,
-        status: programme.status
-      });
-    } else {
-      setEditingProgramme(null);
-      setFormData({
-        level: 'certificate',
-        name: '',
-        status: 'active'
-      });
-    }
-    setShowModal(true);
-  };
-
-  const handleCloseModal = () => {
-    setShowModal(false);
-    setEditingProgramme(null);
-  };
-
-  const handleInputChange = (e) => {
+  const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleFileUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file type
+      const validTypes = [
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'application/vnd.ms-excel',
+        'text/csv'
+      ];
+      
+      if (!validTypes.includes(file.type)) {
+        toast.error('Invalid file type. Please upload .xlsx, .xls, or .csv file');
+        return;
+      }
+
+      setData(prev => ({
+        ...prev,
+        timetableFile: file,
+        timetableName: file.name
+      }));
+      toast.success(`Timetable file staged: ${file.name}`);
+    }
+  };
+
+  const clearFile = () => {
+    setData(prev => ({
+      ...prev,
+      timetableFile: null,
+      timetableName: ''
+    }));
+    if (timetableInputRef.current) {
+      timetableInputRef.current.value = '';
+    }
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (editingProgramme) {
-      setProgrammes(prev => prev.map(p => 
-        p.id === editingProgramme.id 
-          ? { ...p, ...formData }
-          : p
-      ));
-    } else {
-      const newProgramme = {
-        id: Math.max(...programmes.map(p => p.id)) + 1,
-        ...formData,
-        feeStructure: {
-          uploaded: false,
-          fileName: null,
-          uploadDate: null,
-          fileUrl: null
-        },
-        timetable: {
-          uploaded: false,
-          fileName: null,
-          uploadDate: null,
-          fileUrl: null
+    if (!data.timetableFile) {
+      toast.error('Please upload a timetable Excel file');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      // Create FormData for file upload
+      const formData = new FormData();
+      formData.append('timetable', data.timetableFile);
+      formData.append('school', data.school);
+      formData.append('schoolName', schoolOptions.find(s => s.id === data.school)?.name || '');
+      formData.append('academicYear', data.academicYear);
+      formData.append('semester', data.semester);
+      formData.append('notes', data.notes);
+      formData.append('uploadedBy', 'admin'); 
+
+      const response = await api.post('/timetable/upload', formData);
+
+
+      if (response.data.success) {
+        const result = response.data.data;
+        setUploadedTimetable(result);
+
+        toast.success(
+          `Timetable published! ${result.stats.totalSessions} sessions parsed successfully`,
+          { duration: 5000 }
+        );
+
+        // Show warnings if any
+        if (response.data.parseReport.warnings.length > 0) {
+          toast.warning(
+            `${response.data.parseReport.warnings.length} warnings during parsing. Check console for details.`,
+            { duration: 4000 }
+          );
+          console.warn('Parse warnings:', response.data.parseReport.warnings);
         }
-      };
-      setProgrammes(prev => [...prev, newProgramme]);
-    }
-    
-    handleCloseModal();
-  };
 
-  const handleDelete = (id) => {
-    if (window.confirm('Are you sure you want to delete this programme?')) {
-      setProgrammes(prev => prev.filter(p => p.id !== id));
-    }
-  };
-
-  const handleFileUpload = (programmeId, type, event) => {
-    const file = event.target.files[0];
-    if (file) {
-      // Simulate file upload
-      setProgrammes(prev => prev.map(p => {
-        if (p.id === programmeId) {
-          return {
-            ...p,
-            [type]: {
-              uploaded: true,
-              fileName: file.name,
-              uploadDate: new Date().toISOString().split('T')[0],
-              fileUrl: '#' // In real app, this would be the actual URL
-            }
-          };
+        // Show errors if any
+        if (response.data.parseReport.errors.length > 0) {
+          toast.error(
+            `${response.data.parseReport.errors.length} rows had errors. Check console for details.`,
+            { duration: 4000 }
+          );
+          console.error('Parse errors:', response.data.parseReport.errors);
         }
-        return p;
-      }));
-      alert(`${file.name} uploaded successfully!`);
-    }
-  };
 
-  const handleDownload = (fileName) => {
-    // In a real application, this would trigger actual file download
-    alert(`Downloading: ${fileName}`);
-    // window.open(fileUrl, '_blank');
-  };
-
-  const handleDeleteFile = (programmeId, type) => {
-    if (window.confirm('Are you sure you want to delete this file?')) {
-      setProgrammes(prev => prev.map(p => {
-        if (p.id === programmeId) {
-          return {
-            ...p,
-            [type]: {
-              uploaded: false,
-              fileName: null,
-              uploadDate: null,
-              fileUrl: null
-            }
-          };
+        // Reset form
+        setData(initialState);
+        if (timetableInputRef.current) {
+          timetableInputRef.current.value = '';
         }
-        return p;
-      }));
+      } else {
+        throw new Error(response.data.message || 'Upload failed');
+      }
+
+    } catch (error) {
+      console.error('Upload error:', error);
+      const errorMessage = error.response?.data?.message || error.message || 'Upload failed';
+      toast.error(errorMessage);
+      
+      // Show detailed errors if available
+      if (error.response?.data?.errors) {
+        console.error('Detailed errors:', error.response.data.errors);
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
-  const filteredProgrammes = programmes.filter(p => {
-    const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesLevel = filterLevel === 'all' || p.level === filterLevel;
-    
-    return matchesSearch && matchesLevel;
-  });
-
-  // Group programmes by level
-  const groupedProgrammes = {
-    certificate: filteredProgrammes.filter(p => p.level === 'certificate'),
-    diploma: filteredProgrammes.filter(p => p.level === 'diploma'),
-    degree: filteredProgrammes.filter(p => p.level === 'degree')
-  };
-
-  const stats = {
-    total: programmes.length,
-    withFees: programmes.filter(p => p.feeStructure.uploaded).length,
-    withTimetables: programmes.filter(p => p.timetable.uploaded).length,
-    complete: programmes.filter(p => p.feeStructure.uploaded && p.timetable.uploaded).length
-  };
+  const selectedSchoolName = schoolOptions.find(s => s.id === data.school)?.name || "Selected School";
 
   return (
-    <div className="min-h-screen bg-slate-50 p-8">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
+    <div className="p-4 md:p-8 animate-in fade-in duration-500">
+      <div className="max-w-4xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-slate-800">Admissions Management</h1>
-            <p className="text-slate-500 text-sm mt-1">Manage fee structures and timetables for all programmes</p>
+            <h1 className="text-2xl font-bold text-slate-900">Timetable Management</h1>
+            <p className="text-slate-500 text-sm">Upload and manage academic timetables for AI-powered queries</p>
           </div>
           <button 
-            onClick={() => handleOpenModal()}
-            className="bg-[#1a2b4c] text-white px-6 py-3 rounded-lg font-bold flex items-center gap-2 text-sm hover:bg-[#243a5e] transition-colors"
+            type="button"
+            onClick={() => setIsPreview(!isPreview)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-all shadow-sm ${
+              isPreview ? 'bg-indigo-600 text-white' : 'bg-white text-slate-700 border border-slate-200 hover:border-slate-300'
+            }`}
           >
-            <MdAdd size={20}/> Add Programme
+            <Eye size={18} /> {isPreview ? "Back to Edit" : "Student View Preview"}
           </button>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-4 gap-4 mb-6">
-          <div className="bg-white rounded-xl p-5 border border-slate-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-slate-500 text-xs font-semibold uppercase">Total Programmes</p>
-                <p className="text-2xl font-bold text-slate-800 mt-1">{stats.total}</p>
+        {isPreview ? (
+          <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-slate-100 animate-in zoom-in-95 duration-300">
+            <div className="bg-indigo-700 p-8 text-white">
+              <div className="flex items-center gap-3 text-indigo-200 text-xs font-bold uppercase tracking-widest mb-2">
+                <School size={14} /> Academic Portal
               </div>
-              <div className="bg-blue-100 p-3 rounded-lg">
-                <MdSchool className="text-blue-600" size={24}/>
-              </div>
+              <h2 className="text-3xl font-black mb-2">{selectedSchoolName}</h2>
+              <p className="text-indigo-100 flex items-center gap-4 text-sm">
+                <span className="flex items-center gap-1.5"><Calendar size={14} /> Academic Year: {data.academicYear}</span>
+                <span className="flex items-center gap-1.5"><Clock size={14} /> {data.semester}</span>
+              </p>
             </div>
-          </div>
 
-          <div className="bg-white rounded-xl p-5 border border-slate-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-slate-500 text-xs font-semibold uppercase">With Fee Structures</p>
-                <p className="text-2xl font-bold text-green-600 mt-1">{stats.withFees}</p>
-              </div>
-              <div className="bg-green-100 p-3 rounded-lg">
-                <MdAttachMoney className="text-green-600" size={24}/>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl p-5 border border-slate-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-slate-500 text-xs font-semibold uppercase">With Timetables</p>
-                <p className="text-2xl font-bold text-orange-600 mt-1">{stats.withTimetables}</p>
-              </div>
-              <div className="bg-orange-100 p-3 rounded-lg">
-                <MdSchedule className="text-orange-600" size={24}/>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white rounded-xl p-5 border border-slate-200">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-slate-500 text-xs font-semibold uppercase">Complete</p>
-                <p className="text-2xl font-bold text-purple-600 mt-1">{stats.complete}</p>
-              </div>
-              <div className="bg-purple-100 p-3 rounded-lg">
-                <MdFolder className="text-purple-600" size={24}/>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Search and Filters */}
-        <div className="bg-white rounded-xl p-4 mb-6 border border-slate-200">
-          <div className="flex gap-4">
-            <div className="flex-1 relative">
-              <MdSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20}/>
-              <input
-                type="text"
-                placeholder="Search programmes..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-              />
-            </div>
-            
-            <select
-              value={filterLevel}
-              onChange={(e) => setFilterLevel(e.target.value)}
-              className="px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-            >
-              <option value="all">All Levels</option>
-              {levels.map(level => (
-                <option key={level.value} value={level.value}>{level.label}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        {/* Grouped Programmes */}
-        {levels.map(level => {
-          const levelProgrammes = groupedProgrammes[level.value];
-          if (levelProgrammes.length === 0 && filterLevel !== 'all' && filterLevel !== level.value) return null;
-
-          return (
-            <div key={level.value} className="mb-8">
-              <div className="flex items-center gap-3 mb-4">
-                <h2 className="text-xl font-bold text-slate-800 capitalize">{level.label} Programmes</h2>
-                <span className={`bg-${level.color}-100 text-${level.color}-700 px-3 py-1 rounded-full text-xs font-bold`}>
-                  {levelProgrammes.length} {levelProgrammes.length === 1 ? 'Programme' : 'Programmes'}
-                </span>
+            <div className="p-8">
+              <div className="flex items-center gap-2 mb-6">
+                <AlertCircle size={18} className="text-amber-500" />
+                <p className="text-sm text-slate-500 italic">
+                  Download the latest timetable for all courses and units. You can also ask the AI assistant about your schedule!
+                </p>
               </div>
 
-              {levelProgrammes.length === 0 ? (
-                <div className="bg-white rounded-xl p-8 text-center text-slate-500 border border-slate-200">
-                  No {level.label.toLowerCase()} programmes found
+              {/* Timetable Card */}
+              <div className="group bg-slate-50 border border-slate-200 rounded-xl p-6 transition-all hover:shadow-md hover:border-indigo-200">
+                <div className="flex justify-between items-start mb-4">
+                  <div className="p-3 bg-white rounded-lg shadow-sm group-hover:bg-indigo-50 transition-colors">
+                    <Calendar size={24} className="text-indigo-600" />
+                  </div>
+                  <span className="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-0.5 rounded uppercase">Latest</span>
                 </div>
-              ) : (
-                <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                  <table className="w-full text-left border-collapse">
-                    <thead className="bg-slate-50 border-b border-slate-200">
-                      <tr>
-                        <th className="p-4 text-xs font-bold text-slate-400 uppercase">Programme Name</th>
-                        <th className="p-4 text-xs font-bold text-slate-400 uppercase">Fee Structure</th>
-                        <th className="p-4 text-xs font-bold text-slate-400 uppercase">Timetable</th>
-                        <th className="p-4 text-xs font-bold text-slate-400 uppercase">Status</th>
-                        <th className="p-4 text-xs font-bold text-slate-400 uppercase">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {levelProgrammes.map((programme) => (
-                        <tr key={programme.id} className="hover:bg-slate-50/50">
-                          <td className="p-4">
-                            <div className="flex items-center gap-3">
-                              <div className={`bg-${level.color}-100 p-2 rounded-lg`}>
-                                <MdSchool className={`text-${level.color}-600`} size={20}/>
-                              </div>
-                              <div>
-                                <p className="font-bold text-slate-800">{programme.name}</p>
-                                <p className="text-xs text-slate-500 capitalize">{programme.level}</p>
-                              </div>
-                            </div>
-                          </td>
+                <h3 className="font-bold text-slate-800 mb-1">Academic Timetable</h3>
+                <p className="text-xs text-slate-500 mb-4 truncate">
+                  {data.timetableName || "Timetable_2024_S1.xlsx"}
+                </p>
+                <button className="w-full flex items-center justify-center gap-2 bg-indigo-600 text-white font-bold py-2.5 rounded-lg text-sm hover:bg-indigo-700 transition-colors">
+                  <Download size={16} /> Download Timetable
+                </button>
+              </div>
 
-                          {/* Fee Structure Column */}
-                          <td className="p-4">
-                            {programme.feeStructure.uploaded ? (
-                              <div className="space-y-2">
-                                <div className="flex items-center gap-2">
-                                  <MdDescription className="text-green-600" size={16}/>
-                                  <span className="text-xs font-medium text-slate-700 truncate max-w-[200px]">
-                                    {programme.feeStructure.fileName}
-                                  </span>
-                                </div>
-                                <div className="flex gap-1">
-                                  <button
-                                    onClick={() => handleDownload(programme.feeStructure.fileName)}
-                                    className="text-xs bg-green-50 text-green-700 px-2 py-1 rounded hover:bg-green-100 flex items-center gap-1"
-                                  >
-                                    <MdDownload size={14}/> Download
-                                  </button>
-                                  <button
-                                    onClick={() => handleDeleteFile(programme.id, 'feeStructure')}
-                                    className="text-xs bg-red-50 text-red-700 px-2 py-1 rounded hover:bg-red-100"
-                                  >
-                                    <MdDelete size={14}/>
-                                  </button>
-                                </div>
-                                <p className="text-[10px] text-slate-400">
-                                  Uploaded: {programme.feeStructure.uploadDate}
-                                </p>
-                              </div>
-                            ) : (
-                              <label className="cursor-pointer">
-                                <input
-                                  type="file"
-                                  accept=".xlsx,.xls,.csv"
-                                  onChange={(e) => handleFileUpload(programme.id, 'feeStructure', e)}
-                                  className="hidden"
-                                />
-                                <div className="flex items-center gap-2 bg-blue-50 text-blue-700 px-3 py-2 rounded-lg hover:bg-blue-100 transition-colors">
-                                  <MdCloudUpload size={16}/>
-                                  <span className="text-xs font-semibold">Upload Fee Structure</span>
-                                </div>
-                              </label>
-                            )}
-                          </td>
+              {data.notes && (
+                <div className="mt-8 p-6 bg-indigo-50/50 rounded-xl border border-indigo-100">
+                  <h4 className="text-xs font-black text-indigo-900 uppercase tracking-widest mb-2 flex items-center gap-2">
+                    <CheckCircle2 size={14} /> Important Notes
+                  </h4>
+                  <p className="text-sm text-indigo-800 leading-relaxed whitespace-pre-wrap">{data.notes}</p>
+                </div>
+              )}
 
-                          {/* Timetable Column */}
-                          <td className="p-4">
-                            {programme.timetable.uploaded ? (
-                              <div className="space-y-2">
-                                <div className="flex items-center gap-2">
-                                  <MdDescription className="text-green-600" size={16}/>
-                                  <span className="text-xs font-medium text-slate-700 truncate max-w-[200px]">
-                                    {programme.timetable.fileName}
-                                  </span>
-                                </div>
-                                <div className="flex gap-1">
-                                  <button
-                                    onClick={() => handleDownload(programme.timetable.fileName)}
-                                    className="text-xs bg-green-50 text-green-700 px-2 py-1 rounded hover:bg-green-100 flex items-center gap-1"
-                                  >
-                                    <MdDownload size={14}/> Download
-                                  </button>
-                                  <button
-                                    onClick={() => handleDeleteFile(programme.id, 'timetable')}
-                                    className="text-xs bg-red-50 text-red-700 px-2 py-1 rounded hover:bg-red-100"
-                                  >
-                                    <MdDelete size={14}/>
-                                  </button>
-                                </div>
-                                <p className="text-[10px] text-slate-400">
-                                  Uploaded: {programme.timetable.uploadDate}
-                                </p>
-                              </div>
-                            ) : (
-                              <label className="cursor-pointer">
-                                <input
-                                  type="file"
-                                  accept=".xlsx,.xls,.csv"
-                                  onChange={(e) => handleFileUpload(programme.id, 'timetable', e)}
-                                  className="hidden"
-                                />
-                                <div className="flex items-center gap-2 bg-orange-50 text-orange-700 px-3 py-2 rounded-lg hover:bg-orange-100 transition-colors">
-                                  <MdCloudUpload size={16}/>
-                                  <span className="text-xs font-semibold">Upload Timetable</span>
-                                </div>
-                              </label>
-                            )}
-                          </td>
-
-                          <td className="p-4">
-                            <span className={`px-2 py-0.5 rounded-md text-[10px] font-black uppercase ${
-                              programme.status === 'active'
-                                ? 'bg-green-100 text-green-700'
-                                : 'bg-slate-100 text-slate-600'
-                            }`}>
-                              {programme.status}
-                            </span>
-                          </td>
-
-                          <td className="p-4 flex gap-2">
-                            <button 
-                              onClick={() => handleOpenModal(programme)}
-                              className="text-slate-400 hover:text-blue-600 transition-colors"
-                              title="Edit Programme"
-                            >
-                              <MdEdit size={20}/>
-                            </button>
-                            <button 
-                              onClick={() => handleDelete(programme.id)}
-                              className="text-slate-400 hover:text-red-500 transition-colors"
-                              title="Delete Programme"
-                            >
-                              <MdDelete size={20}/>
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+              {uploadedTimetable && (
+                <div className="mt-8 p-6 bg-green-50 rounded-xl border border-green-200">
+                  <h4 className="text-xs font-black text-green-900 uppercase tracking-widest mb-3 flex items-center gap-2">
+                    <CheckCircle2 size={14} /> Upload Statistics
+                  </h4>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-green-700">{uploadedTimetable.stats.totalSessions}</div>
+                      <div className="text-xs text-green-600">Total Sessions</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-green-700">{uploadedTimetable.stats.uniqueUnits}</div>
+                      <div className="text-xs text-green-600">Unique Units</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-green-700">{uploadedTimetable.stats.lecturers}</div>
+                      <div className="text-xs text-green-600">Lecturers</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-green-700">{uploadedTimetable.stats.rooms}</div>
+                      <div className="text-xs text-green-600">Venues</div>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
-          );
-        })}
-      </div>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* School & Period Section */}
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="md:col-span-2">
+                <h2 className="font-bold text-slate-800 flex items-center gap-2 mb-2">
+                  <School size={18} className="text-indigo-500"/> School & Period Information
+                </h2>
+              </div>
+              
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-500 uppercase">Select School *</label>
+                <select 
+                  name="school" 
+                  value={data.school} 
+                  onChange={handleChange} 
+                  className="w-full border p-2.5 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-slate-50 border-slate-200"
+                  required
+                >
+                  {schoolOptions.map(opt => (
+                    <option key={opt.id} value={opt.id}>{opt.name}</option>
+                  ))}
+                </select>
+              </div>
 
-      {/* Add/Edit Programme Modal */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full">
-            <div className="border-b border-slate-200 p-6 flex justify-between items-center">
-              <h2 className="text-2xl font-bold text-slate-800">
-                {editingProgramme ? 'Edit Programme' : 'Add New Programme'}
-              </h2>
-              <button 
-                onClick={handleCloseModal}
-                className="text-slate-400 hover:text-slate-600"
-              >
-                <MdClose size={24}/>
-              </button>
-            </div>
-
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    Programme Level *
-                  </label>
-                  <select
-                    name="level"
-                    value={formData.level}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                  >
-                    {levels.map(level => (
-                      <option key={level.value} value={level.value}>{level.label}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    Programme Name *
-                  </label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                    placeholder="e.g., Certificate in Information Technology"
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-500 uppercase">Academic Year *</label>
+                  <input 
+                    name="academicYear" 
+                    value={data.academicYear} 
+                    onChange={handleChange} 
+                    className="w-full border p-2 rounded focus:ring-2 focus:ring-indigo-500 outline-none" 
+                    placeholder="e.g. 2024/2025" 
+                    pattern="\d{4}/\d{4}"
+                    required 
                   />
                 </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    Status *
-                  </label>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-500 uppercase">Semester *</label>
                   <select
-                    name="status"
-                    value={formData.status}
-                    onChange={handleInputChange}
+                    name="semester" 
+                    value={data.semester} 
+                    onChange={handleChange} 
+                    className="w-full border p-2 rounded focus:ring-2 focus:ring-indigo-500 outline-none" 
                     required
-                    className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                   >
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
+                    <option value="Jan-April">Jan-April</option>
+                    <option value="May-Aug">May-Aug</option>
+                    <option value="Sept-Dec">Sept-Dec</option>
                   </select>
                 </div>
-
-                {!editingProgramme && (
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <p className="text-sm text-blue-800">
-                      <strong>Note:</strong> After creating the programme, you can upload fee structures and timetables from the main table.
-                    </p>
-                  </div>
-                )}
               </div>
+            </div>
 
-              <div className="flex gap-3 pt-4">
-                <button
-                  type="submit"
-                  className="flex-1 bg-[#1a2b4c] text-white px-6 py-3 rounded-lg font-bold hover:bg-[#243a5e] transition-colors"
+            {/* Timetable Upload Section */}
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 space-y-6">
+              <h2 className="font-bold text-slate-800 flex items-center gap-2">
+                <Upload size={18} className="text-indigo-500"/> Timetable Upload
+              </h2>
+              
+              <div className="space-y-2">
+                <label className="text-xs font-bold text-slate-500 uppercase flex items-center gap-2">
+                  <FileSpreadsheet size={14} /> Excel Timetable (.xlsx, .xls, .csv)
+                </label>
+                <div className="text-xs text-slate-400 mb-2">
+                  Expected columns: <code className="bg-slate-100 px-1 rounded">day, unitcode, unittittle, lecName, starttime, end, room</code>
+                </div>
+                <div 
+                  onClick={() => timetableInputRef.current?.click()}
+                  className={`border-2 border-dashed rounded-xl p-8 transition-all cursor-pointer flex flex-col items-center justify-center gap-3 ${
+                    data.timetableName ? 'border-green-200 bg-green-50' : 'border-slate-200 hover:border-indigo-300 hover:bg-slate-50'
+                  }`}
                 >
-                  {editingProgramme ? 'Update Programme' : 'Add Programme'}
-                </button>
-                <button
-                  type="button"
-                  onClick={handleCloseModal}
-                  className="px-6 py-3 border border-slate-300 rounded-lg font-bold text-slate-700 hover:bg-slate-50 transition-colors"
-                >
-                  Cancel
-                </button>
+                  <input 
+                    type="file" 
+                    ref={timetableInputRef} 
+                    className="hidden" 
+                    onChange={handleFileUpload} 
+                    accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv" 
+                  />
+                  {data.timetableName ? (
+                    <>
+                      <CheckCircle2 className="text-green-500" size={40} />
+                      <span className="text-sm font-medium text-green-700 text-center break-all px-4">
+                        {data.timetableName}
+                      </span>
+                      <div className="text-xs text-green-600">
+                        File size: {(data.timetableFile?.size / 1024).toFixed(2)} KB
+                      </div>
+                      <button 
+                        type="button" 
+                        onClick={(e) => { e.stopPropagation(); clearFile(); }} 
+                        className="mt-2 text-red-500 hover:text-red-700 text-xs font-bold uppercase flex items-center gap-1 transition-colors"
+                      >
+                        <Trash2 size={12} /> Remove File
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="text-slate-400" size={40} />
+                      <div className="text-center">
+                        <span className="text-sm text-slate-600 block font-medium">Click to upload or drag & drop</span>
+                        <span className="text-xs text-slate-400 block mt-1">Excel file containing timetable data</span>
+                        <span className="text-[10px] text-slate-300 block mt-2">Maximum file size: 10MB</span>
+                      </div>
+                    </>
+                  )}
+                </div>
               </div>
-            </form>
-          </div>
-        </div>
-      )}
+            </div>
+
+            {/* Additional Notes */}
+            <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+              <label className="text-xs font-bold text-slate-500 uppercase block mb-2">
+                Notes for Students (Optional)
+              </label>
+              <textarea 
+                name="notes" 
+                value={data.notes} 
+                onChange={handleChange} 
+                rows={3} 
+                className="w-full border p-3 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none bg-slate-50" 
+                placeholder="Include any specific instructions (e.g., timetable effective dates, venue changes, exam schedules)..."
+                maxLength={1000}
+              />
+              <div className="text-xs text-slate-400 mt-1 text-right">
+                {data.notes.length}/1000 characters
+              </div>
+            </div>
+
+            <div className="flex justify-end pt-4 pb-12">
+              <button 
+                type="submit" 
+                disabled={loading || !data.timetableFile} 
+                className={`px-10 py-4 rounded-xl font-bold flex items-center gap-3 transition-all shadow-xl hover:-translate-y-1 ${
+                  loading || !data.timetableFile
+                    ? 'bg-slate-400 cursor-not-allowed' 
+                    : 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-100'
+                }`}
+              >
+                <Save size={20} /> 
+                {loading ? 'Processing & Parsing...' : 'Upload & Publish Timetable'}
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
     </div>
   );
 };
 
-export default AdmissionsAdmin;
+export default TimetableAdmin;

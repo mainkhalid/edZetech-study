@@ -364,4 +364,3 @@ exports.getProgrammeStats = async (req, res) => {
   }
 };
 
-module.exports = exports;
