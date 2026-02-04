@@ -1,26 +1,22 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Plus,
   Trash2,
   Save,
-  FileText,
-  Users,
+  Eye,
+  Loader2,
   Calendar,
   DollarSign,
-  Eye,
   GraduationCap,
-  CheckCircle,
-  Clock,
-  MapPin,
-  Facebook,
-  Twitter,
-  Globe,
+  FileText,
   Info,
+  Upload,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
+import api from "../../api/axios";
 
 const scholarshipInitialState = {
-  id: "",
   name: "",
   provider: "",
   amount: "",
@@ -28,299 +24,519 @@ const scholarshipInitialState = {
   eligibility: "Open to All",
   description: "",
   requirements: [""],
+  tags: [""],
+  applicationUrl: "",
+  contactEmail: "",
+  thumbnail: null,
 };
 
-const clubInitialState = {
-  name: "",
-  category: "Sports",
-  president: "",
-  schedule: "",
-  location: "",
-  description: "",
-  activities: [""],
-};
-
-const CombinedPortal = () => {
-  const [activeTab, setActiveTab] = useState("scholarships"); // 'scholarships' or 'clubs'
-  const [isPreview, setIsPreview] = useState(false);
+const ScholarshipAdmin = () => {
+  const [scholarships, setScholarships] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [scholarshipData, setScholarshipData] = useState(
-    scholarshipInitialState,
-  );
-  const [clubData, setClubData] = useState(clubInitialState);
+  const [formData, setFormData] = useState(scholarshipInitialState);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingId, setEditingId] = useState(null);
+  const [isPreview, setIsPreview] = useState(false);
+  const [thumbnailPreview, setThumbnailPreview] = useState(null);
 
-  // Scholarship handlers
-  const handleScholarshipChange = (e) => {
+  useEffect(() => {
+    fetchScholarships();
+  }, []);
+
+  const fetchScholarships = async () => {
+    try {
+      setLoading(true);
+      const response = await api.get("/scholarships?sort=-createdAt");
+      if (response.data.success) {
+        setScholarships(response.data.data);
+      }
+    } catch (error) {
+      toast.error("Failed to fetch scholarships");
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleChange = (e) => {
     const { name, value } = e.target;
-    setScholarshipData((prev) => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleThumbnailChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error("Image size should be less than 5MB");
+        return;
+      }
+      setFormData((prev) => ({ ...prev, thumbnail: file }));
+      setThumbnailPreview(URL.createObjectURL(file));
+    }
+  };
+
+  const removeThumbnail = () => {
+    setFormData((prev) => ({ ...prev, thumbnail: null }));
+    setThumbnailPreview(null);
   };
 
   const handleRequirementChange = (index, value) => {
-    const newReqs = [...scholarshipData.requirements];
+    const newReqs = [...formData.requirements];
     newReqs[index] = value;
-    setScholarshipData((prev) => ({ ...prev, requirements: newReqs }));
+    setFormData((prev) => ({ ...prev, requirements: newReqs }));
   };
 
   const addRequirement = () => {
-    setScholarshipData((prev) => ({
+    setFormData((prev) => ({
       ...prev,
       requirements: [...prev.requirements, ""],
     }));
   };
 
   const removeRequirement = (index) => {
-    const newReqs = scholarshipData.requirements.filter((_, i) => i !== index);
-    setScholarshipData((prev) => ({ ...prev, requirements: newReqs }));
-  };
-
-  const handleScholarshipSubmit = (e) => {
-    e.preventDefault();
-    setLoading(true);
-    const simulate = new Promise((resolve) => setTimeout(resolve, 1500));
-    toast.promise(simulate, {
-      loading: "Creating scholarship...",
-      success: () => {
-        setScholarshipData(scholarshipInitialState);
-        setLoading(false);
-        return "Scholarship posted successfully!";
-      },
-      error: "Error creating scholarship.",
-      finally: () => setLoading(false),
-    });
-  };
-
-  // Club handlers
-  const handleClubChange = (e) => {
-    const { name, value } = e.target;
-    setClubData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  const handleActivityChange = (index, value) => {
-    const newAct = [...clubData.activities];
-    newAct[index] = value;
-    setClubData((prev) => ({ ...prev, activities: newAct }));
-  };
-
-  const addActivity = () =>
-    setClubData((prev) => ({ ...prev, activities: [...prev.activities, ""] }));
-
-  const removeActivity = (index) =>
-    setClubData((prev) => ({
-      ...prev,
-      activities: clubData.activities.filter((_, i) => i !== index),
+    const newReqs = formData.requirements.filter((_, i) => i !== index);
+    setFormData((prev) => ({ 
+      ...prev, 
+      requirements: newReqs.length > 0 ? newReqs : [""] 
     }));
-
-  const handleClubSubmit = (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setTimeout(() => {
-      toast.success("Club updated successfully!");
-      setLoading(false);
-      setClubData(clubInitialState);
-    }, 1000);
   };
 
-  const renderScholarshipPreview = () => (
-    <div className="bg-white p-8 rounded-2xl shadow-xl border border-indigo-100 animate-in zoom-in-95 duration-300">
+  const handleTagChange = (index, value) => {
+    const newTags = [...formData.tags];
+    newTags[index] = value;
+    setFormData((prev) => ({ ...prev, tags: newTags }));
+  };
+
+  const addTag = () => {
+    setFormData((prev) => ({ ...prev, tags: [...prev.tags, ""] }));
+  };
+
+  const removeTag = (index) => {
+    const newTags = formData.tags.filter((_, i) => i !== index);
+    setFormData((prev) => ({ 
+      ...prev, 
+      tags: newTags.length > 0 ? newTags : [""] 
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const submitData = new FormData();
+
+      const filteredRequirements = formData.requirements
+        .map(req => req.trim())
+        .filter(req => req.length > 0);
+      
+      const filteredTags = formData.tags
+        .map(tag => tag.trim())
+        .filter(tag => tag.length > 0);
+
+      if (filteredRequirements.length === 0) {
+        toast.error("Please add at least one requirement");
+        setLoading(false);
+        return;
+      }
+
+      // Add all text fields
+      Object.keys(formData).forEach((key) => {
+        if (key === "thumbnail") return;
+        if (key === "requirements") {
+          submitData.append(key, JSON.stringify(filteredRequirements));
+        } else if (key === "tags") {
+          submitData.append(key, JSON.stringify(filteredTags));
+        } else {
+          submitData.append(key, formData[key]);
+        }
+      });
+      if (formData.thumbnail) {
+        submitData.append("thumbnail", formData.thumbnail);
+      }
+      console.log("Submitting requirements:", filteredRequirements);
+      console.log("Submitting tags:", filteredTags);
+
+      let response;
+      if (isEditing) {
+        response = await api.put(`/scholarships/${editingId}`, submitData);
+        toast.success("Scholarship updated successfully!");
+      } else {
+        response = await api.post("/scholarships", submitData);
+        toast.success("Scholarship created successfully!");
+      }
+
+      if (response.data.success) {
+        // Debug: Log what was saved
+        console.log("Saved scholarship:", response.data.data);
+        resetForm();
+        fetchScholarships();
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Operation failed");
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const editScholarship = (scholarship) => {
+    // Ensure requirements and tags are arrays
+    const requirementsArray = Array.isArray(scholarship.requirements) 
+      ? scholarship.requirements 
+      : [];
+    const tagsArray = Array.isArray(scholarship.tags) 
+      ? scholarship.tags 
+      : [];
+
+    setFormData({
+      name: scholarship.name,
+      provider: scholarship.provider,
+      amount: scholarship.amount,
+      deadline: scholarship.deadline
+        ? new Date(scholarship.deadline).toISOString().split("T")[0]
+        : "",
+      eligibility: scholarship.eligibility,
+      description: scholarship.description,
+      requirements: requirementsArray.length > 0 ? requirementsArray : [""],
+      tags: tagsArray.length > 0 ? tagsArray : [""],
+      applicationUrl: scholarship.applicationUrl || "",
+      contactEmail: scholarship.contactEmail || "",
+      thumbnail: null,
+    });
+    
+    setThumbnailPreview(scholarship.thumbnail?.url || null);
+    setIsEditing(true);
+    setEditingId(scholarship._id);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const deleteScholarship = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this scholarship?"))
+      return;
+
+    try {
+      const response = await api.delete(`/scholarships/${id}`);
+      if (response.data.success) {
+        toast.success("Scholarship deleted successfully");
+        fetchScholarships();
+      }
+    } catch (error) {
+      toast.error("Failed to delete scholarship");
+      console.error(error);
+    }
+  };
+
+  const togglePublish = async (id, currentStatus) => {
+    try {
+      const response = await api.patch(`/scholarships/${id}/publish`);
+      if (response.data.success) {
+        toast.success(response.data.message);
+        fetchScholarships();
+      }
+    } catch (error) {
+      toast.error("Failed to update status");
+      console.error(error);
+    }
+  };
+
+  const resetForm = () => {
+    setFormData(scholarshipInitialState);
+    setIsEditing(false);
+    setEditingId(null);
+    setIsPreview(false);
+    setThumbnailPreview(null);
+  };
+
+  const renderPreview = () => (
+    <div className="bg-white p-8 rounded-2xl shadow-xl border border-indigo-100">
       <div className="flex justify-between items-start mb-6 border-b border-slate-100 pb-6">
         <div className="space-y-1">
           <span className="bg-indigo-100 text-indigo-700 text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider">
             Financial Aid
           </span>
           <h2 className="text-2xl font-black text-slate-800 uppercase tracking-tight">
-            {scholarshipData.name || "SCHOLARSHIP NAME"}
+            {formData.name || "SCHOLARSHIP NAME"}
           </h2>
           <p className="text-indigo-600 font-semibold">
-            {scholarshipData.provider || "PROVIDER NAME"}
+            {formData.provider || "PROVIDER NAME"}
           </p>
-          {scholarshipData.thumbnail?.preview && (
-            <img
-              src={scholarshipData.thumbnail.preview}
-              alt="Scholarship thumbnail"
-              className="w-full h-48 object-cover rounded-xl mb-6"
-            />
-          )}
         </div>
         <div className="text-right">
           <p className="text-slate-400 text-xs font-bold uppercase">Deadline</p>
-          <p className="text-red-500 font-bold">
-            {scholarshipData.deadline || "TBA"}
-          </p>
+          <p className="text-red-500 font-bold">{formData.deadline || "TBA"}</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
-          <p className="text-slate-400 text-[10px] font-bold uppercase mb-1 flex items-center gap-1">
-            <DollarSign size={10} /> Funding Amount
-          </p>
-          <p className="text-lg font-bold text-slate-800">
-            {scholarshipData.amount || "N/A"}
-          </p>
-        </div>
-        <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
-          <p className="text-slate-400 text-[10px] font-bold uppercase mb-1 flex items-center gap-1">
-            <GraduationCap size={10} /> Eligibility
-          </p>
-          <p className="text-lg font-bold text-slate-800">
-            {scholarshipData.eligibility}
-          </p>
-        </div>
-        <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
-          <p className="text-slate-400 text-[10px] font-bold uppercase mb-1 flex items-center gap-1">
-            <CheckCircle size={10} /> Type
-          </p>
-          <p className="text-lg font-bold text-slate-800">Merit-Based</p>
+      {thumbnailPreview && (
+        <img
+          src={thumbnailPreview}
+          alt="Scholarship preview"
+          className="w-full h-48 object-cover rounded-lg mb-6"
+        />
+      )}
+
+      <div className="mb-6">
+        <div className="flex gap-4 mb-4">
+          <div className="flex items-center gap-2">
+            <DollarSign className="text-green-500" size={20} />
+            <span className="font-bold text-slate-700">
+              {formData.amount || "Amount TBA"}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <GraduationCap className="text-blue-500" size={20} />
+            <span className="text-slate-600">{formData.eligibility}</span>
+          </div>
         </div>
       </div>
 
-      <div className="space-y-6">
-        <div>
-          <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 border-b border-slate-100 pb-1">
-            About this Scholarship
+      {formData.description && (
+        <div className="mb-6">
+          <h3 className="font-bold text-slate-800 flex items-center gap-2 mb-2">
+            <Info size={18} className="text-indigo-500" /> Description
           </h3>
-          <p className="text-slate-600 leading-relaxed whitespace-pre-wrap">
-            {scholarshipData.description || "No description provided."}
-          </p>
+          <p className="text-slate-600 leading-relaxed">{formData.description}</p>
         </div>
-        <div>
-          <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 border-b border-slate-100 pb-1">
-            Application Requirements
-          </h3>
-          <ul className="grid grid-cols-1 gap-3">
-            {scholarshipData.requirements.map(
-              (req, i) =>
-                req && (
-                  <li
-                    key={i}
-                    className="flex items-center gap-3 text-slate-700 bg-indigo-50/50 p-3 rounded-lg border border-indigo-50"
-                  >
-                    <div className="w-5 h-5 rounded-full bg-indigo-500 text-white flex items-center justify-center text-[10px] font-bold">
-                      {i + 1}
-                    </div>
-                    {req}
-                  </li>
-                ),
-            )}
+      )}
+
+      {formData.requirements.filter(req => req.trim()).length > 0 && (
+        <div className="mb-6">
+          <h3 className="font-bold text-slate-800 mb-3">Requirements</h3>
+          <ul className="space-y-2">
+            {formData.requirements
+              .filter(req => req.trim())
+              .map((req, index) => (
+                <li key={index} className="flex items-start gap-2">
+                  <span className="text-indigo-500 mt-1">•</span>
+                  <span className="text-slate-600">{req}</span>
+                </li>
+              ))}
           </ul>
         </div>
-      </div>
+      )}
+
+      {formData.tags.filter(tag => tag.trim()).length > 0 && (
+        <div className="mb-6">
+          <h3 className="font-bold text-slate-800 mb-3">Tags</h3>
+          <div className="flex flex-wrap gap-2">
+            {formData.tags
+              .filter(tag => tag.trim())
+              .map((tag, index) => (
+                <span
+                  key={index}
+                  className="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-sm font-semibold"
+                >
+                  {tag}
+                </span>
+              ))}
+          </div>
+        </div>
+      )}
+
+      {(formData.applicationUrl || formData.contactEmail) && (
+        <div className="border-t border-slate-100 pt-6 mt-6">
+          {formData.applicationUrl && (
+            <a
+              href={formData.applicationUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block bg-indigo-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-indigo-700 mb-2"
+            >
+              Apply Now
+            </a>
+          )}
+          {formData.contactEmail && (
+            <p className="text-sm text-slate-600">
+              Contact: {formData.contactEmail}
+            </p>
+          )}
+        </div>
+      )}
     </div>
   );
 
-  const renderScholarshipForm = () => (
-    <form onSubmit={handleScholarshipSubmit} className="space-y-6">
-      <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="md:col-span-2">
-          <h2 className="font-bold text-slate-800 flex items-center gap-2 mb-2 underline decoration-indigo-500 decoration-2 underline-offset-4">
-            <FileText size={18} className="text-indigo-500" /> Scholarship
-            Identity
-          </h2>
-        </div>
-        <div className="space-y-1">
-          <label className="text-xs font-bold text-slate-500 uppercase">
+  const renderForm = () => (
+    <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Basic Info */}
+      <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+          <label className="block font-bold text-slate-800 mb-2">
             Scholarship Name *
           </label>
           <input
+            type="text"
             name="name"
-            value={scholarshipData.name}
-            onChange={handleScholarshipChange}
+            value={formData.name}
+            onChange={handleChange}
             className="w-full border p-2 rounded focus:ring-2 focus:ring-indigo-500 outline-none"
-            placeholder="e.g. Presidential Excellence Award"
             required
           />
         </div>
-        <div className="space-y-1">
-          <label className="text-xs font-bold text-slate-500 uppercase">
-            Provider / Organization *
+
+        <div>
+          <label className="block font-bold text-slate-800 mb-2">
+            Provider *
           </label>
           <input
+            type="text"
             name="provider"
-            value={scholarshipData.provider}
-            onChange={handleScholarshipChange}
+            value={formData.provider}
+            onChange={handleChange}
             className="w-full border p-2 rounded focus:ring-2 focus:ring-indigo-500 outline-none"
-            placeholder="e.g. National Education Foundation"
             required
           />
         </div>
-        <div className="space-y-1">
-          <label className="text-xs font-bold text-slate-500 uppercase">
-            Funding Amount *
+
+        <div>
+          <label className="block font-bold text-slate-800 mb-2">
+            Amount *
           </label>
           <input
+            type="text"
             name="amount"
-            value={scholarshipData.amount}
-            onChange={handleScholarshipChange}
+            value={formData.amount}
+            onChange={handleChange}
             className="w-full border p-2 rounded focus:ring-2 focus:ring-indigo-500 outline-none"
-            placeholder="e.g. $10,000 / Full Tuition"
+            placeholder="e.g., $5,000"
             required
           />
         </div>
-        <div className="space-y-1">
-          <label className="text-xs font-bold text-slate-500 uppercase">
-            Application Deadline *
+
+        <div>
+          <label className="block font-bold text-slate-800 mb-2">
+            Deadline *
           </label>
           <input
-            name="deadline"
             type="date"
-            value={scholarshipData.deadline}
-            onChange={handleScholarshipChange}
+            name="deadline"
+            value={formData.deadline}
+            onChange={handleChange}
             className="w-full border p-2 rounded focus:ring-2 focus:ring-indigo-500 outline-none"
             required
           />
         </div>
-        <div className="space-y-1 md:col-span-2">
-          <label className="text-xs font-bold text-slate-500 uppercase">
-            Eligibility Criteria
+
+        <div>
+          <label className="block font-bold text-slate-800 mb-2">
+            Eligibility *
+          </label>
+          <select
+            name="eligibility"
+            value={formData.eligibility}
+            onChange={handleChange}
+            className="w-full border p-2 rounded focus:ring-2 focus:ring-indigo-500 outline-none"
+            required
+          >
+            <option>Open to All</option>
+            <option>Undergraduate</option>
+            <option>Graduate</option>
+            <option>PhD</option>
+            <option>High School</option>
+          </select>
+        </div>
+
+        <div>
+          <label className="block font-bold text-slate-800 mb-2">
+            Application URL
           </label>
           <input
-            name="eligibility"
-            value={scholarshipData.eligibility}
-            onChange={handleScholarshipChange}
+            type="url"
+            name="applicationUrl"
+            value={formData.applicationUrl}
+            onChange={handleChange}
             className="w-full border p-2 rounded focus:ring-2 focus:ring-indigo-500 outline-none"
-            placeholder="e.g. Undergraduate students with GPA > 3.5"
+            placeholder="https://..."
+          />
+        </div>
+
+        <div className="md:col-span-2">
+          <label className="block font-bold text-slate-800 mb-2">
+            Contact Email
+          </label>
+          <input
+            type="email"
+            name="contactEmail"
+            value={formData.contactEmail}
+            onChange={handleChange}
+            className="w-full border p-2 rounded focus:ring-2 focus:ring-indigo-500 outline-none"
+            placeholder="contact@example.com"
           />
         </div>
       </div>
 
-      <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 space-y-4">
-        <h2 className="font-bold text-slate-800 flex items-center gap-2">
-          <Plus size={18} className="text-emerald-500" /> Scholarship Details &
-          Requirements
+      {/* Thumbnail */}
+      <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+        <h2 className="font-bold text-slate-800 flex items-center gap-2 mb-4">
+          <Upload size={18} className="text-indigo-500" /> Thumbnail Image
         </h2>
-        <ImageUpload
-        label="Scholarship Thumbnail"
-        image={scholarshipData.thumbnail}
-        setImage={(img) =>
-          setScholarshipData((prev) => ({ ...prev, thumbnail: img }))
-        }
-      />
-        <div className="space-y-1">
-          <label className="text-xs font-bold text-slate-500 uppercase">
-            Full Description
-          </label>
-          <textarea
-            name="description"
-            value={scholarshipData.description}
-            onChange={handleScholarshipChange}
-            rows={4}
-            className="w-full border p-2 rounded focus:ring-2 focus:ring-indigo-500 outline-none"
-            placeholder="Provide background and context for this funding opportunity..."
-          />
+        <div>
+          {thumbnailPreview ? (
+            <div className="relative inline-block">
+              <img
+                src={thumbnailPreview}
+                alt="Preview"
+                className="w-full max-w-md h-48 object-cover rounded-lg"
+              />
+              <button
+                type="button"
+                onClick={removeThumbnail}
+                className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full hover:bg-red-600"
+              >
+                <X size={16} />
+              </button>
+            </div>
+          ) : (
+            <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-slate-300 rounded-lg cursor-pointer hover:bg-slate-50">
+              <Upload className="text-slate-400 mb-2" />
+              <span className="text-sm text-slate-500">
+                Click to upload thumbnail
+              </span>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleThumbnailChange}
+                className="hidden"
+              />
+            </label>
+          )}
         </div>
+      </div>
+
+      {/* Description */}
+      <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+        <h2 className="font-bold text-slate-800 flex items-center gap-2 mb-4">
+          <Info size={18} className="text-indigo-500" /> Description
+        </h2>
+        <textarea
+          name="description"
+          value={formData.description}
+          onChange={handleChange}
+          rows={6}
+          className="w-full border p-2 rounded focus:ring-2 focus:ring-indigo-500 outline-none"
+          placeholder="Describe the scholarship, its purpose, and what makes it unique..."
+          required
+        />
+      </div>
+
+      {/* Requirements */}
+      <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+        <h2 className="font-bold text-slate-800 mb-4">
+          Application Requirements *
+        </h2>
+        <p className="text-sm text-slate-500 mb-4">
+          Add each requirement as a separate item. These will appear as bullet points.
+        </p>
         <div className="space-y-2">
-          <label className="text-xs font-bold text-slate-500 uppercase block">
-            Specific Requirements
-          </label>
-          {scholarshipData.requirements.map((req, index) => (
+          {formData.requirements.map((req, index) => (
             <div key={index} className="flex gap-2">
               <input
                 value={req}
                 onChange={(e) => handleRequirementChange(index, e.target.value)}
                 className="flex-1 border p-2 rounded focus:ring-2 focus:ring-indigo-500 outline-none"
-                placeholder={`Requirement ${index + 1}`}
+                placeholder={`Requirement ${index + 1} (e.g., "GPA above 3.5")`}
               />
-              {scholarshipData.requirements.length > 1 && (
+              {formData.requirements.length > 1 && (
                 <button
                   type="button"
                   onClick={() => removeRequirement(index)}
@@ -336,300 +552,30 @@ const CombinedPortal = () => {
             onClick={addRequirement}
             className="mt-2 flex items-center gap-2 text-sm font-bold text-indigo-600 hover:text-indigo-700"
           >
-            <Plus size={16} /> Add Another Requirement
+            <Plus size={16} /> Add Requirement
           </button>
         </div>
       </div>
 
-      <div className="flex justify-end pt-4 pb-12">
-        <button
-          type="submit"
-          disabled={loading}
-          className={`px-10 py-4 rounded-xl font-black uppercase tracking-widest flex items-center gap-2 transition-all shadow-xl hover:shadow-indigo-200 ${loading ? "bg-slate-400 cursor-not-allowed" : "bg-indigo-600 hover:bg-indigo-700 text-white"}`}
-        >
-          <Save size={18} />
-          {loading ? "Posting..." : "Publish Scholarship"}
-        </button>
-      </div>
-    </form>
-  );
-  const ImageUpload = ({ label, image, setImage }) => {
-    const handleImageChange = (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-
-      setImage({
-        file,
-        preview: URL.createObjectURL(file),
-      });
-    };
-
-    return (
-      <div className="space-y-2">
-        <label className="text-xs font-bold text-slate-500 uppercase">
-          {label}
-        </label>
-
-        <div className="flex items-center gap-4">
-          <div className="w-24 h-24 rounded-xl border-2 border-dashed border-slate-300 flex items-center justify-center overflow-hidden bg-slate-50">
-            {image?.preview ? (
-              <img
-                src={image.preview}
-                alt="Thumbnail preview"
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <span className="text-xs text-slate-400 text-center px-2">
-                No image
-              </span>
-            )}
-          </div>
-
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleImageChange}
-            className="text-sm"
-          />
-        </div>
-      </div>
-    );
-  };
-
-  const renderClubPreview = () => (
-    <div className="bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-100 animate-in zoom-in-95 duration-300">
-      <div className="h-32 bg-gradient-to-r from-emerald-500 to-teal-600 relative">
-        <div className="absolute -bottom-8 left-8 w-24 h-24 bg-white rounded-2xl shadow-lg border-4 border-white flex items-center justify-center overflow-hidden">
-          {clubData.thumbnail?.preview ? (
-            <img
-              src={clubData.thumbnail.preview}
-              alt="Club logo"
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <span className="text-xs text-slate-400">No logo</span>
-          )}
-        </div>
-      </div>
-      <div className="pt-12 px-8 pb-8">
-        <div className="flex justify-between items-start mb-6">
-          <div>
-            <h2 className="text-3xl font-black text-slate-800 tracking-tight">
-              {clubData.name || "CLUB NAME"}
-            </h2>
-            <span className="inline-block bg-emerald-100 text-emerald-700 text-xs font-bold px-3 py-1 rounded-full mt-2">
-              {clubData.category}
-            </span>
-          </div>
-          <div className="flex gap-2">
-            <button className="p-2 bg-slate-100 rounded-lg text-slate-400 hover:text-emerald-500 transition-colors">
-              <Facebook size={20} />
-            </button>
-            <button className="p-2 bg-slate-100 rounded-lg text-slate-400 hover:text-emerald-500 transition-colors">
-              <Twitter size={20} />
-            </button>
-            <button className="p-2 bg-slate-100 rounded-lg text-slate-400 hover:text-emerald-500 transition-colors">
-              <Globe size={20} />
-            </button>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="space-y-6">
-            <div>
-              <h3 className="flex items-center gap-2 text-slate-800 font-bold mb-3">
-                <Info size={18} className="text-emerald-500" /> About Us
-              </h3>
-              <p className="text-slate-600 leading-relaxed text-sm whitespace-pre-wrap">
-                {clubData.description ||
-                  "Describe the club's mission and culture here."}
-              </p>
-            </div>
-            <div>
-              <h3 className="flex items-center gap-2 text-slate-800 font-bold mb-3">
-                <Users size={18} className="text-emerald-500" /> Core Activities
-              </h3>
-              <ul className="space-y-2">
-                {clubData.activities.map(
-                  (act, i) =>
-                    act && (
-                      <li
-                        key={i}
-                        className="flex items-center gap-2 text-sm text-slate-600 border-l-2 border-emerald-500 pl-3 py-1 bg-emerald-50/30"
-                      >
-                        {act}
-                      </li>
-                    ),
-                )}
-              </ul>
-            </div>
-          </div>
-          <div className="space-y-4">
-            <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 space-y-4">
-              <h3 className="text-slate-800 font-bold text-lg">Quick Facts</h3>
-              <div className="space-y-3">
-                <div className="flex items-start gap-3">
-                  <Users size={18} className="text-emerald-600 mt-0.5" />
-                  <div>
-                    <p className="text-[10px] uppercase font-bold text-slate-400">
-                      Club President
-                    </p>
-                    <p className="text-sm font-semibold text-slate-700">
-                      {clubData.president || "Pending"}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <Clock size={18} className="text-emerald-600 mt-0.5" />
-                  <div>
-                    <p className="text-[10px] uppercase font-bold text-slate-400">
-                      Meeting Schedule
-                    </p>
-                    <p className="text-sm font-semibold text-slate-700">
-                      {clubData.schedule || "TBD"}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-start gap-3">
-                  <MapPin size={18} className="text-emerald-600 mt-0.5" />
-                  <div>
-                    <p className="text-[10px] uppercase font-bold text-slate-400">
-                      Primary Location
-                    </p>
-                    <p className="text-sm font-semibold text-slate-700">
-                      {clubData.location || "On Campus"}
-                    </p>
-                  </div>
-                </div>
-              </div>
-              <button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl shadow-lg shadow-emerald-100 transition-all active:scale-95">
-                Join Organization
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  const renderClubForm = () => (
-    <form onSubmit={handleClubSubmit} className="space-y-6">
-      <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="md:col-span-2">
-          <h2 className="font-bold text-slate-800 flex items-center gap-2 mb-2">
-            <Users size={18} className="text-emerald-500" /> Organization
-            Profile
-          </h2>
-        </div>
-        <div className="space-y-1">
-          <label className="text-xs font-bold text-slate-500 uppercase">
-            Club Name *
-          </label>
-          <input
-            name="name"
-            value={clubData.name}
-            onChange={handleClubChange}
-            className="w-full border p-2 rounded focus:ring-2 focus:ring-emerald-500 outline-none"
-            placeholder="e.g. Coding & Robotics Society"
-            required
-          />
-          <ImageUpload
-            label="Club Logo / Thumbnail"
-            image={clubData.thumbnail}
-            setImage={(img) =>
-              setClubData((prev) => ({ ...prev, thumbnail: img }))
-            }
-          />
-        </div>
-        <div className="space-y-1">
-          <label className="text-xs font-bold text-slate-500 uppercase">
-            Category *
-          </label>
-          <select
-            name="category"
-            value={clubData.category}
-            onChange={handleClubChange}
-            className="w-full border p-2 rounded focus:ring-2 focus:ring-emerald-500 outline-none"
-          >
-            <option value="Sports">Sports & Fitness</option>
-            <option value="Tech">Technology & Innovation</option>
-            <option value="Arts">Arts & Culture</option>
-            <option value="Academic">Academic Support</option>
-            <option value="Volunteer">Volunteer & Charity</option>
-          </select>
-        </div>
-        <div className="space-y-1">
-          <label className="text-xs font-bold text-slate-500 uppercase">
-            President / Leader *
-          </label>
-          <input
-            name="president"
-            value={clubData.president}
-            onChange={handleClubChange}
-            className="w-full border p-2 rounded focus:ring-2 focus:ring-emerald-500 outline-none"
-            required
-          />
-        </div>
-        <div className="space-y-1">
-          <label className="text-xs font-bold text-slate-500 uppercase">
-            Meeting Schedule
-          </label>
-          <input
-            name="schedule"
-            value={clubData.schedule}
-            onChange={handleClubChange}
-            className="w-full border p-2 rounded focus:ring-2 focus:ring-emerald-500 outline-none"
-            placeholder="e.g. Wed 4:00 PM - 6:00 PM"
-          />
-        </div>
-        <div className="space-y-1 md:col-span-2">
-          <label className="text-xs font-bold text-slate-500 uppercase">
-            Primary Location
-          </label>
-          <input
-            name="location"
-            value={clubData.location}
-            onChange={handleClubChange}
-            className="w-full border p-2 rounded focus:ring-2 focus:ring-emerald-500 outline-none"
-            placeholder="e.g. Student Center Room 201"
-          />
-        </div>
-      </div>
-
-      <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 space-y-4">
-        <h2 className="font-bold text-slate-800 flex items-center gap-2">
-          <Info size={18} className="text-emerald-500" /> Description &
-          Activities
-        </h2>
-        <div className="space-y-1">
-          <label className="text-xs font-bold text-slate-500 uppercase">
-            About the Club
-          </label>
-          <textarea
-            name="description"
-            value={clubData.description}
-            onChange={handleClubChange}
-            rows={4}
-            className="w-full border p-2 rounded focus:ring-2 focus:ring-emerald-500 outline-none"
-            placeholder="History, mission and target audience..."
-          />
-        </div>
+      {/* Tags */}
+      <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
+        <h2 className="font-bold text-slate-800 mb-4">Tags</h2>
+        <p className="text-sm text-slate-500 mb-4">
+          Add tags to help categorize this scholarship (e.g., "STEM", "Women", "International")
+        </p>
         <div className="space-y-2">
-          <label className="text-xs font-bold text-slate-500 uppercase block">
-            Regular Activities
-          </label>
-          {clubData.activities.map((act, index) => (
+          {formData.tags.map((tag, index) => (
             <div key={index} className="flex gap-2">
               <input
-                value={act}
-                onChange={(e) => handleActivityChange(index, e.target.value)}
-                className="flex-1 border p-2 rounded focus:ring-2 focus:ring-emerald-500 outline-none"
-                placeholder={`Activity ${index + 1}`}
+                value={tag}
+                onChange={(e) => handleTagChange(index, e.target.value)}
+                className="flex-1 border p-2 rounded focus:ring-2 focus:ring-indigo-500 outline-none"
+                placeholder={`Tag ${index + 1}`}
               />
-              {clubData.activities.length > 1 && (
+              {formData.tags.length > 1 && (
                 <button
                   type="button"
-                  onClick={() => removeActivity(index)}
+                  onClick={() => removeTag(index)}
                   className="p-2 text-red-400 hover:bg-red-50 rounded"
                 >
                   <Trash2 size={16} />
@@ -639,106 +585,154 @@ const CombinedPortal = () => {
           ))}
           <button
             type="button"
-            onClick={addActivity}
-            className="mt-2 flex items-center gap-2 text-sm font-bold text-emerald-600 hover:text-emerald-700"
+            onClick={addTag}
+            className="mt-2 flex items-center gap-2 text-sm font-bold text-indigo-600 hover:text-indigo-700"
           >
-            <Plus size={16} /> Add Activity
+            <Plus size={16} /> Add Tag
           </button>
         </div>
       </div>
 
-      <div className="flex justify-end pt-4 pb-12">
+      {/* Submit Buttons */}
+      <div className="flex gap-3 justify-end">
+        {isEditing && (
+          <button
+            type="button"
+            onClick={resetForm}
+            className="px-6 py-3 border border-slate-300 rounded-lg font-bold hover:bg-slate-50"
+          >
+            Cancel
+          </button>
+        )}
         <button
           type="submit"
           disabled={loading}
-          className={`px-10 py-3 rounded-lg font-bold flex items-center gap-2 transition-all shadow-lg ${loading ? "bg-slate-400 cursor-not-allowed" : "bg-emerald-600 hover:bg-emerald-700 text-white"}`}
+          className={`px-10 py-3 rounded-lg font-bold flex items-center gap-2 ${
+            loading ? "bg-slate-400" : "bg-indigo-600 hover:bg-indigo-700"
+          } text-white`}
         >
           <Save size={18} />
-          {loading ? "Saving..." : "Register Organization"}
+          {loading
+            ? "Saving..."
+            : isEditing
+              ? "Update Scholarship"
+              : "Create Scholarship"}
         </button>
       </div>
     </form>
   );
 
   return (
-    <div className="p-4 md:p-8 animate-in fade-in duration-500 bg-gradient-to-br from-slate-50 to-slate-100 min-h-screen">
-      <div className="max-w-4xl mx-auto">
-        {/* Header with Toggle */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+    <div className="p-4 md:p-8 bg-gradient-to-br from-slate-50 to-slate-100 min-h-screen">
+      <div className="max-w-6xl mx-auto">
+        {/* Header */}
+        <div className="flex justify-between items-center mb-8">
           <div>
             <h1 className="text-3xl font-bold text-slate-900">
-              {activeTab === "scholarships"
-                ? "Scholarship Portal"
-                : "Student Life & Organizations"}
+              Scholarship Management
             </h1>
-            <p className="text-slate-500 text-sm">
-              {activeTab === "scholarships"
-                ? "Manage student financial aid and grants"
-                : "Register and manage campus clubs, groups and societies"}
+            <p className="text-slate-500">
+              Create and manage scholarship opportunities
             </p>
           </div>
-
-          <div className="flex gap-3">
-            {/* Tab Toggle */}
-            <div className="inline-flex bg-white rounded-lg p-1 shadow-sm border border-slate-200">
-              <button
-                onClick={() => {
-                  setActiveTab("scholarships");
-                  setIsPreview(false);
-                }}
-                className={`px-4 py-2 rounded-md font-semibold text-sm transition-all ${
-                  activeTab === "scholarships"
-                    ? "bg-indigo-600 text-white shadow-sm"
-                    : "text-slate-600 hover:text-slate-900"
-                }`}
-              >
-                <GraduationCap size={16} className="inline mr-1" />
-                Scholarships
-              </button>
-              <button
-                onClick={() => {
-                  setActiveTab("clubs");
-                  setIsPreview(false);
-                }}
-                className={`px-4 py-2 rounded-md font-semibold text-sm transition-all ${
-                  activeTab === "clubs"
-                    ? "bg-emerald-600 text-white shadow-sm"
-                    : "text-slate-600 hover:text-slate-900"
-                }`}
-              >
-                <Users size={16} className="inline mr-1" />
-                Clubs
-              </button>
-            </div>
-
-            {/* Preview Toggle */}
-            <button
-              type="button"
-              onClick={() => setIsPreview(!isPreview)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold transition-all shadow-sm ${
-                isPreview
-                  ? (activeTab === "scholarships"
-                      ? "bg-indigo-600"
-                      : "bg-emerald-600") + " text-white"
-                  : "bg-white text-slate-700 border border-slate-200"
-              }`}
-            >
-              <Eye size={18} /> {isPreview ? "Edit" : "Preview"}
-            </button>
-          </div>
+          <button
+            onClick={() => setIsPreview(!isPreview)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold ${
+              isPreview
+                ? "bg-indigo-600 text-white"
+                : "bg-white text-slate-700 border"
+            }`}
+          >
+            <Eye size={18} /> {isPreview ? "Edit" : "Preview"}
+          </button>
         </div>
 
-        {/* Content Area */}
-        {activeTab === "scholarships"
-          ? isPreview
-            ? renderScholarshipPreview()
-            : renderScholarshipForm()
-          : isPreview
-            ? renderClubPreview()
-            : renderClubForm()}
+        {/* Form or Preview */}
+        {isPreview ? renderPreview() : renderForm()}
+
+        {/* Scholarships List */}
+        <div className="mt-12">
+          <h2 className="text-2xl font-bold text-slate-800 mb-6">
+            All Scholarships
+          </h2>
+
+          {loading ? (
+            <div className="flex justify-center py-12">
+              <Loader2 className="animate-spin text-indigo-500" size={40} />
+            </div>
+          ) : scholarships.length === 0 ? (
+            <div className="text-center py-12 text-slate-500">
+              No scholarships found. Create your first scholarship above.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {scholarships.map((scholarship) => (
+                <div
+                  key={scholarship._id}
+                  className="bg-white rounded-xl p-6 shadow-sm border"
+                >
+                  {scholarship.thumbnail?.url && (
+                    <img
+                      src={scholarship.thumbnail.url}
+                      alt={scholarship.name}
+                      className="w-full h-32 object-cover rounded-lg mb-4"
+                    />
+                  )}
+                  <h3 className="font-bold text-lg mb-2 line-clamp-1">
+                    {scholarship.name}
+                  </h3>
+                  <p className="text-sm text-slate-600 mb-1">
+                    {scholarship.provider}
+                  </p>
+                  <p className="text-sm text-indigo-600 font-semibold mb-2">
+                    {scholarship.amount}
+                  </p>
+                  <p className="text-xs text-slate-500 mb-4">
+                    Deadline:{" "}
+                    {new Date(scholarship.deadline).toLocaleDateString()}
+                  </p>
+
+                  {/* Display requirements count */}
+                  {scholarship.requirements && scholarship.requirements.length > 0 && (
+                    <p className="text-xs text-slate-600 mb-2">
+                      {scholarship.requirements.length} requirement(s)
+                    </p>
+                  )}
+
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => editScholarship(scholarship)}
+                      className="flex-1 px-3 py-2 bg-blue-50 text-blue-600 rounded font-semibold text-sm hover:bg-blue-100"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() =>
+                        togglePublish(scholarship._id, scholarship.published)
+                      }
+                      className={`flex-1 px-3 py-2 rounded font-semibold text-sm ${
+                        scholarship.published
+                          ? "bg-green-50 text-green-600 hover:bg-green-100"
+                          : "bg-slate-50 text-slate-600 hover:bg-slate-100"
+                      }`}
+                    >
+                      {scholarship.published ? "Published" : "Draft"}
+                    </button>
+                    <button
+                      onClick={() => deleteScholarship(scholarship._id)}
+                      className="px-3 py-2 bg-red-50 text-red-600 rounded hover:bg-red-100"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
 };
 
-export default CombinedPortal;
+export default ScholarshipAdmin;

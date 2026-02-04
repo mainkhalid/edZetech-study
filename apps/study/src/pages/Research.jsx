@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom'; // 1. Correct import (lowercase)
+import { useNavigate } from 'react-router-dom'; 
 import { 
   Microscope, Users, TrendingUp, Award, Target, 
   Lightbulb, Calendar, ArrowRight, Loader2
@@ -11,22 +11,11 @@ const Research = () => {
   const navigate = useNavigate(); 
   
   const [projects, setProjects] = useState([]);
+  const [scholarships, setScholarships] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [scholarshipsLoading, setScholarshipsLoading] = useState(true);
 
-  const scholarships = [
-    {
-      id: 1,
-      title: "Global STEM Excellence 2026",
-      provider: "TechForward Foundation",
-      thumbnail: "https://cdn.tuko.co.ke/images/720/18d0a87c71bce9fb.webp?v=1",
-      description: "Full tuition coverage for undergraduate students pursuing degrees in AI and Sustainable Energy.",
-      amount: "$15,000 / Year",
-      deadline: "Oct 15, 2026",
-      requirements: ["3.8 GPA", "Personal Statement", "2 Recommendations"],
-      eligibility: ["Full-time STEM students", "International students welcome"]
-    }
-  ];
-
+  
   useEffect(() => {
     const fetchActiveProjects = async () => {
       try {
@@ -42,43 +31,67 @@ const Research = () => {
     };
     fetchActiveProjects();
   }, []);
-  
+
+  useEffect(() => {
+    const fetchActiveScholarships = async () => {
+      try {
+        const response = await api.get('/scholarships/active');
+        if (response.data.success) {
+          setScholarships(response.data.data);
+        }
+      } catch (error) {
+        console.error("Error fetching scholarships:", error);
+        try {
+          const fallbackResponse = await api.get('/scholarships?published=true&limit=3');
+          if (fallbackResponse.data.success) {
+            setScholarships(fallbackResponse.data.data);
+          }
+        } catch (fallbackError) {
+          console.error("Error fetching fallback scholarships:", fallbackError);
+        }
+      } finally {
+        setScholarshipsLoading(false);
+      }
+    };
+    fetchActiveScholarships();
+  }, []);
 
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* Hero Section ... */}
-     <section
-  className="relative py-16 text-white bg-cover bg-center"
-  style={{
-    backgroundImage:
-      "url('https://cdn.tuko.co.ke/images/720/18d0a87c71bce9fb.webp?v=1')"
-  }}
->
-  {/* Dark overlay */}
-  <div className="absolute inset-0 bg-[#1a2b4c]/85"></div>
+      {/* Hero Section */}
+      <section
+        className="relative py-16 text-white bg-cover bg-center"
+        style={{
+          backgroundImage:
+            "url('https://cdn.tuko.co.ke/images/720/18d0a87c71bce9fb.webp?v=1')"
+        }}
+      >
+        {/* Dark overlay */}
+        <div className="absolute inset-0 bg-[#1a2b4c]/85"></div>
 
-  {/* Content */}
-  <div className="relative max-w-7xl mx-auto px-4 text-center">
-    <h1 className="text-5xl font-extrabold mb-4">
-      Research & Innovation
-    </h1>
-    <p className="text-slate-300 max-w-2xl mx-auto italic">
-      "Advancing knowledge through technology and community-centered research."
-    </p>
-  </div>
-</section>
+        {/* Content */}
+        <div className="relative max-w-7xl mx-auto px-4 text-center">
+          <h1 className="text-5xl font-extrabold mb-4">
+            Research & Innovation
+          </h1>
+          <p className="text-slate-300 max-w-2xl mx-auto italic">
+            "Advancing knowledge through technology and community-centered research."
+          </p>
+        </div>
+      </section>
 
-
-      {/* 2. DYNAMIC ACTIVE RESEARCH PROJECTS */}
       <section className="py-20">
         <div className="max-w-7xl mx-auto px-4">
-          {/* Header ... */}
+          {/* Header */}
           <div className="flex justify-between items-end mb-12">
             <div>
               <h2 className="text-sm font-bold text-orange-500 uppercase tracking-widest mb-2">Ongoing Work</h2>
               <h1 className="text-4xl font-extrabold text-[#1a2b4c]">On Going Research & Innovations</h1>
             </div>
-            <button className="text-orange-600 font-bold flex items-center gap-2 hover:gap-3 transition-all">
+            <button 
+              onClick={() => navigate('/research-projects')}
+              className="text-orange-600 font-bold flex items-center gap-2 hover:gap-3 transition-all"
+            >
               View All Projects <ArrowRight size={20}/>
             </button>
           </div>
@@ -86,6 +99,10 @@ const Research = () => {
           {loading ? (
             <div className="flex justify-center py-20">
               <Loader2 className="animate-spin text-orange-500" size={40}/>
+            </div>
+          ) : projects.length === 0 ? (
+            <div className="text-center py-20">
+              <p className="text-slate-500 text-lg">No active research projects at the moment.</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -113,8 +130,9 @@ const Research = () => {
                         <span className="text-xs font-medium text-slate-500">{project.lead}</span>
                       </div>
                       <button
-                       onClick={() => navigate(`/research/${project._id}`)} 
-                       className="text-[#1a2b4c] font-bold text-sm hover:text-orange-600">
+                        onClick={() => navigate(`/research/${project._id}`)} 
+                        className="text-[#1a2b4c] font-bold text-sm hover:text-orange-600"
+                      >
                         Details →
                       </button>
                     </div>
@@ -126,7 +144,7 @@ const Research = () => {
         </div>
       </section>
 
-      {/* 3. SCHOLARSHIPS SECTION */}
+      {/* SCHOLARSHIPS SECTION */}
       <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center mb-12">
@@ -134,15 +152,35 @@ const Research = () => {
             <h1 className="text-4xl font-extrabold text-[#1a2b4c] mb-4">Scholarships & Grants</h1>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {scholarships.map((scholarship) => (
-              <ScholarshipCard 
-                key={scholarship.id} 
-                scholarship={scholarship} 
-                
-              />
-            ))}
-          </div>
+          {scholarshipsLoading ? (
+            <div className="flex justify-center py-20">
+              <Loader2 className="animate-spin text-rose-500" size={40}/>
+            </div>
+          ) : scholarships.length === 0 ? (
+            <div className="text-center py-20">
+              <p className="text-slate-500 text-lg">No active scholarships available at the moment.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {scholarships.slice(0, 3).map((scholarship) => (
+                <ScholarshipCard 
+                  key={scholarship._id} 
+                  scholarship={scholarship} 
+                />
+              ))}
+            </div>
+          )}
+
+          {scholarships.length > 3 && (
+            <div className="text-center mt-12">
+              <button 
+                onClick={() => navigate('/scholarships')}
+                className="px-8 py-3 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl transition-all inline-flex items-center gap-2"
+              >
+                View All Scholarships <ArrowRight size={18}/>
+              </button>
+            </div>
+          )}
         </div>
       </section>
     </div>

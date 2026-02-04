@@ -1,17 +1,37 @@
 import React from 'react';
-import { 
-  FileText, 
-  CheckCircle, 
-  Clock, 
-  DollarSign,
+import {
+   FileText,
+   CheckCircle,
+   Clock,
+   DollarSign,
   Users,
   Globe,
   Award,
-  Calendar
+  Calendar,
+  Download
 } from 'lucide-react';
 import ApplicationSteps from '../components/ApplicationSteps';
 
 const Admissions = () => {
+  const prospectusUrl = '/https://www.zetech.ac.ke/index.php/downloads?download=59:students-handbook'; 
+
+  const applicationUrl = 'https://sajili.zetech.ac.ke'; 
+
+  const handleDownloadProspectus = () => {
+
+    const link = document.createElement('a');
+    link.href = prospectusUrl;
+    link.download = 'Zetech-University-Prospectus.pdf'; 
+    link.target = '_blank';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleApplyNow = () => {
+    window.open(applicationUrl, '_blank');
+  };
+
   const requirements = [
     {
       level: 'Undergraduate',
@@ -100,10 +120,17 @@ const Admissions = () => {
             Begin your journey to academic excellence and career success. Apply now for our upcoming intakes.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-4 rounded-lg font-bold text-lg transition-colors">
+            <button 
+              onClick={handleApplyNow}
+              className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-4 rounded-lg font-bold text-lg transition-colors flex items-center justify-center gap-2"
+            >
               Apply Online Now
             </button>
-            <button className="bg-white/10 hover:bg-white/20 text-white px-8 py-4 rounded-lg font-bold text-lg transition-colors border-2 border-white/20">
+            <button
+              onClick={handleDownloadProspectus}
+              className="bg-white/10 hover:bg-white/20 text-white px-8 py-4 rounded-lg font-bold text-lg transition-colors border-2 border-white/20 flex items-center justify-center gap-2"
+            >
+              <Download size={20} />
               Download Prospectus
             </button>
           </div>
@@ -197,8 +224,8 @@ const Admissions = () => {
                   </div>
                 </div>
                 <div className={`inline-block px-4 py-2 rounded-full text-sm font-bold ${
-                  intake.status === 'Open' 
-                    ? 'bg-green-100 text-green-700' 
+                  intake.status === 'Open'
+                    ? 'bg-green-100 text-green-700'
                     : 'bg-blue-100 text-blue-700'
                 }`}>
                   {intake.status}
@@ -217,10 +244,16 @@ const Admissions = () => {
             Join thousands of students who have transformed their careers at Zetech University
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-4 rounded-lg font-bold text-lg transition-colors">
+            <button 
+              onClick={handleApplyNow}
+              className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-4 rounded-lg font-bold text-lg transition-colors"
+            >
               Apply Now
             </button>
-            <button className="bg-white text-[#1a2b4c] hover:bg-gray-100 px-8 py-4 rounded-lg font-bold text-lg transition-colors">
+            <button 
+              onClick={() => window.location.href = 'mailto:admissions@zetech.ac.ke'}
+              className="bg-white text-[#1a2b4c] hover:bg-gray-100 px-8 py-4 rounded-lg font-bold text-lg transition-colors"
+            >
               Contact Admissions
             </button>
           </div>

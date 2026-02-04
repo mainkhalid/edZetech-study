@@ -10,6 +10,7 @@ const faqRoutes = require('./routes/faqRoutes');
 const chatbot = require('./routes/chatbot');
 const researchRoutes = require('./routes/research');
 const timetableRoutes = require('./routes/timetableRoutes');
+const scholarshipRoutes = require('./routes/scholarship')
 const app = express();
 
 
@@ -29,6 +30,7 @@ app.use('/api/faqs', faqRoutes);
 app.use('/api/chatbot', chatbot);
 app.use('/api/research', researchRoutes);
 app.use('/api/timetable', timetableRoutes);
+app.use('/api/scholarships', scholarshipRoutes)
 
 
 const PORT = process.env.PORT || 5000;

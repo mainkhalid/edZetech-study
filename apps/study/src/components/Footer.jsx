@@ -17,18 +17,18 @@ const Footer = () => {
 
   const footerLinks = {
     explore: [
-      { name: 'Admissions', href: '#' },
+      { name: 'Admissions', href: '/admissions' },
       { name: 'Course Catalog', href: '/academics' },
       { name: 'Student Portal', href: 'https://portal.zetech.ac.ke'},
       { name: 'eLearning', href:'https://elearning.zetech.ac.ke'},
-      { name: 'Scholarships', href: '#' },
+      { name: 'Scholarships', href: '/research' },
     ],
     resources: [
       { name: 'Library', href: '#' },
-      { name: 'Research Support', href: '#' },
+      { name: 'Research Support', href: '/research' },
       { name: 'Contacts', href: '/contact' },
       { name: 'FAQs', href: '/faq' },
-      { name: 'Downloads', href: '#' },
+      { name: 'Student Life', href: 'student-life' },
     ]
   };
 
@@ -37,7 +37,7 @@ const Footer = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
           
-          {/* Column 1: Brand & About */}
+          {/*  Brand & About */}
           <div className="space-y-6">
             <img src={logo.zetlogo} alt="Zetech University" className="h-12 " />
             <p className="text-slate-300 text-sm leading-relaxed">
@@ -68,7 +68,7 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Column 3: Resources */}
+          {/* \ Resources */}
           <div>
             <h3 className="text-lg font-bold mb-6 relative pb-2 after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-12 after:h-1 after:bg-orange-500">
               Resources
@@ -85,7 +85,7 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Column 4: Contact Info */}
+          {/* Contact Info */}
           <div>
             <h3 className="text-lg font-bold mb-6 relative pb-2 after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-12 after:h-1 after:bg-orange-500">
               Contact Us
