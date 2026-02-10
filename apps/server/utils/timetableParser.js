@@ -42,25 +42,23 @@ class TimetableParser {
   }
 
   parseRowWithTimeSlots(row, rowNumber) {
-    const dayKey = Object.keys(row)[0];
-    const day = row[dayKey];
-    
-    if (!day || day.toString().trim() === "") {
-      return; 
-    }
+    const values = Object.values(row); 
+
+    const day = values[0];
+    if (!day || day.toString().trim() === "") return;
 
     const normalizedDay = this.normalizeDay(day);
 
-    Object.keys(row).forEach((columnHeader) => {
-      if (columnHeader === dayKey) return; 
+    for (let index = 1; index <= 3; index++) {
+      const cellContent = values[index];
+      if (!cellContent || cellContent.toString().trim() === "") continue;
 
-      const cellContent = row[columnHeader];
-      if (!cellContent || cellContent.toString().trim() === "") {
-        return; 
+      const timeSlot = this.getTimeSlotByIndex(index);
+      if (!timeSlot) {
+        console.warn("Invalid time slot index:", index);
+        continue;
       }
 
-      const timeSlot = this.extractTimeSlot(columnHeader);
-      
       const parsed = this.parseJammedCell(
         cellContent.toString().trim(),
         normalizedDay,
@@ -71,7 +69,7 @@ class TimetableParser {
       if (parsed) {
         this.parsedSessions.push(parsed);
       }
-    });
+    }
   }
 
   parseJammedCell(cellContent, day, timeSlot, rowNumber) {
@@ -132,25 +130,14 @@ class TimetableParser {
     };
   }
 
-  extractTimeSlot(columnHeader) {
-    const timeMatch = columnHeader.match(/(\d{4})-(\d{4})/);
-    
-    if (timeMatch) {
-      const start = this.formatTime(timeMatch[1]);
-      const end = this.formatTime(timeMatch[2]);
-      return { start, end };
-    }
+  getTimeSlotByIndex(index) {
+    const timeSlots = {
+      1: { start: '08:00', end: '11:00' },
+      2: { start: '11:00', end: '14:00' },
+      3: { start: '14:00', end: '17:00' }
+    };
 
-    return { start: "09:00", end: "10:30" };
-  }
-
-  formatTime(timeString) {
-    if (timeString.length === 4) {
-      const hours = timeString.substring(0, 2);
-      const minutes = timeString.substring(2, 4);
-      return `${hours}:${minutes}`;
-    }
-    return timeString;
+    return timeSlots[index] || null;
   }
 
   normalizeDay(day) {

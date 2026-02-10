@@ -34,12 +34,12 @@ class AIBotService {
 
   async getTimetableInfo() {
     try {
-      // Get all published timetables with metadata
+      
       const timetables = await Timetable.find({ status: 'published' })
         .select('school schoolName academicYear semester metadata uploadDate')
         .lean();
 
-      // Get unique schools and their timetable availability
+      
       const timetableAvailability = timetables.map(t => ({
         school: t.schoolName,
         academicYear: t.academicYear,

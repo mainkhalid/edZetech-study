@@ -68,7 +68,7 @@ const Admissions = () => {
   const intakeSchedule = [
     {
       intake: 'January',
-      applicationDeadline: 'December 15',
+      applicationDeadline:  'January 15',
       startDate: 'Early January',
       status: 'Open'
     },

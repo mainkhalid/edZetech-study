@@ -270,7 +270,6 @@ const deleteScholarship = async (req, res) => {
       });
     }
 
-    // Delete thumbnail from Cloudinary if exists
     if (scholarship.thumbnail && scholarship.thumbnail.publicId) {
       try {
         await deleteFromCloudinary(scholarship.thumbnail.publicId);
