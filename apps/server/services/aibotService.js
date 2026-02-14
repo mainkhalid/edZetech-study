@@ -7,7 +7,7 @@ class AIBotService {
   constructor() {
     this.apiKey = process.env.OPENROUTER_API_KEY;
     this.apiUrl = 'https://openrouter.ai/api/v1/chat/completions';
-    this.model = "tngtech/deepseek-r1t2-chimera:free"
+    this.model = "liquid/lfm-2.5-1.2b-instruct:free";
   }
 
   async getProgrammes() {
@@ -87,7 +87,7 @@ class AIBotService {
           })));
         });
       } else if (queryLower.includes('lecturer') || queryLower.includes('teacher')) {
-        // Try to extract lecturer name
+        // extract lecturer name
         const nameMatch = query.match(/(?:lecturer|teacher|dr\.|prof\.|mr\.|mrs\.|ms\.)\s+([a-z\s]+)/i);
         if (nameMatch) {
           const lecturerName = nameMatch[1].trim();
@@ -262,7 +262,7 @@ For Information questions:
 
 For Programme Recommendations:
 - List 2–4 programmes
-- Include name, code, and level
+- Include name and level
 - Give a short reason for each
 
 For Timetable Questions:

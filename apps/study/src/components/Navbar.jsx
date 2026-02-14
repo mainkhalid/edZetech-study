@@ -178,24 +178,11 @@ const Navbar = () => {
                 )}
               </div>
             ))}
-            <button 
-              onClick={() => setSearchOpen(!searchOpen)}
-              className="text-[#1a2b4c] hover:scale-110 transition-transform"
-              aria-label="Search"
-            >
-              <Search size={20} strokeWidth={3} />
-            </button>
+            
           </div>
 
           {/* Mobile Button */}
           <div className="lg:hidden flex items-center gap-3">
-            <button 
-              onClick={() => setSearchOpen(!searchOpen)}
-              className="text-[#1a2b4c]"
-              aria-label="Search"
-            >
-              <Search size={24} />
-            </button>
             <button 
               onClick={() => setIsOpen(!isOpen)} 
               className="text-[#1a2b4c]"
@@ -207,29 +194,7 @@ const Navbar = () => {
         </div>
       </div>
 
-      {/* Search Bar */}
-      {searchOpen && (
-        <div className="bg-slate-50 border-t border-b border-gray-200 py-4 animate-in slide-in-from-top duration-200">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <form onSubmit={handleSearch} className="relative">
-              <input 
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search programs, courses, or information..."
-                className="w-full px-5 py-3 pr-12 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-orange-400 bg-white"
-                autoFocus
-              />
-              <button 
-                type="submit"
-                className="absolute right-2 top-1/2 -translate-y-1/2 bg-orange-500 hover:bg-orange-600 text-white p-2 rounded transition-colors"
-              >
-                <Search size={20} />
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
+      
 
       {/* Mobile Menu */}
       {isOpen && (

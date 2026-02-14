@@ -45,7 +45,7 @@ const programmeSchema = new mongoose.Schema({
     trim: true
   },
   
-  // Program Content
+ 
   description: {
     type: String,
     trim: true
